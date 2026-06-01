@@ -17,7 +17,7 @@
 | 11 | API Design | OpenAPI 3.1 YAML: все маршруты, примеры, pagination, error format |
 | 12 | Безопасность | Rate limiting, argon2 vs bcrypt, upload защита, audit logging |
 | 13 | DevOps | Docker Compose, CI/CD GitHub Actions, env management |
-| NFR | Нефункциональные требования | Тесты, offline-first, optimistic updates, observability, масштаб |
+| NFR | Нефункциональные требования | Offline-first, optimistic updates, observability, масштаб |
 | Portfolio | Ценность для портфолио | Темы для собеседований, каверзные вопросы |
 
 ---
@@ -34,7 +34,7 @@
 | DB | Полная `schema.prisma` (все сущности), первые миграции |
 | Auth skeleton | `POST /auth/register`, `POST /auth/login`, JWT access + refresh (rotation), middleware |
 | Frontend skeleton | Expo Router layout, NativeWind config, React Native Reusables setup, Zustand auth store |
-| CI | GitHub Actions: lint + typecheck + test на PR |
+| CI | GitHub Actions: lint + typecheck на PR |
 
 **Deliverables:** запущенный `docker compose up`, регистрация/логин работают end-to-end, Expo открывается на девайсе.
 
@@ -57,7 +57,7 @@
 
 **Deliverables:** тренер и клиент регистрируются, логинятся, видят свои профили; refresh rotation работает.
 
-**Definition of Done:** unit-тесты auth middleware; integration-тест register+login+refresh; E2E: пользователь логинится и видит dashboard.
+**Definition of Done:** auth flow работает end-to-end; refresh rotation и кража-детекция проверены вручную; Expo подключается с обоими ролями.
 
 **Зависимости:** Sprint 0.
 
@@ -142,7 +142,7 @@
 | Категория | Scope |
 |-----------|-------|
 | Backend | `subscriptions` модуль, plan enforcement middleware (лимит клиентов) |
-| Billing | RevenueCat SDK (iOS/Android IAP) + Stripe для web/billing portal |
+| Billing | RevenueCat SDK (iOS/Android IAP) + ЮMoney для web-платежей |
 | Frontend | Settings: Subscription экран, paywall для превышения лимита |
 
 **Deliverables:** тренер на Free-плане видит paywall при добавлении 4-го клиента.
@@ -155,16 +155,15 @@
 
 ---
 
-### Sprint 7 — Analytics & Polish (post-MVP) (2 weeks)
-**Цель:** аналитика для тренера, финальная полировка UX.
+### Sprint 7 — UX Polish (post-MVP) (2 weeks)
+**Цель:** финальная полировка UX, единообразие состояний экранов.
 
 | Категория | Scope |
 |-----------|-------|
-| Backend | Analytics endpoints: активность клиентов, workout stats, retention |
-| Frontend | Trainer: Analytics экран (charts), Client: Progress charts |
 | Polish | Loading/error/empty states единообразны, skeleton screens, haptics |
+| UX | Анимации переходов, accessibility improvements |
 
-**Deliverables:** тренер видит графики активности клиентов за последние 30 дней.
+**Deliverables:** все экраны имеют loading/error/empty states; приложение ощущается полированным.
 
 **Зависимости:** Sprint 3, 5.
 
@@ -175,7 +174,6 @@
 
 | Категория | Scope |
 |-----------|-------|
-| Testing | Integration-тесты критических flow (auth, workout execution, upload); e2e Maestro smoke tests |
 | Observability | Структурные логи (pino), Sentry (frontend + backend), health checks |
 | Offline-first | TanStack Query persist (MMKV), action queue для офлайн-отметки тренировок |
 | Docs | README с диаграммами, dev setup, architecture decisions |
@@ -197,7 +195,6 @@
 | Push-уведомления | ✅ MVP |
 | Realtime (trainer dashboard) | ✅ MVP |
 | Подписки и биллинг | 🔜 Post-MVP |
-| Аналитика | 🔜 Post-MVP |
 | Offline-first (action queue) | 🔜 Post-MVP (Sprint 8) |
 | Multi-language / i18n | ❌ Roadmap |
 | Web-версия для тренера | ❌ Roadmap |
@@ -213,7 +210,7 @@
 |---|-----------|-------------|
 | 1 | Хранилище — **Cloudflare R2** (S3-compatible) | Нет egress fee, бесплатный tier 10GB, простая интеграция через `@aws-sdk/client-s3` |
 | 2 | Realtime — **SSE (Server-Sent Events)** на Fastify | Достаточно для uni-directional updates (сервер → клиент); проще WebSocket; нет vendor lock-in как у Pusher. Детали — в разделе 6 |
-| 3 | Биллинг — **RevenueCat** (IAP) + **Stripe** (web/manual) | RevenueCat абстрагирует App Store / Google Play IAP; Stripe — для web-токена и billing portal |
+| 3 | Биллинг — **RevenueCat** (IAP) + **ЮMoney** (web/manual) | RevenueCat абстрагирует App Store / Google Play IAP; ЮMoney — для web-платежей (популярен в РФ, простая интеграция) |
 | 4 | Scheduler — **pg-boss** (PostgreSQL-based job queue) | Нет дополнительных сервисов (Redis не нужен для MVP); транзакционные гарантии доставки |
 | 5 | Хеширование паролей — **argon2** | Победитель Password Hashing Competition; более устойчив к GPU-атакам чем bcrypt. Детали — в разделе 12 |
 | 6 | Thumbnails — **sharp** на backend при upload | Синхронная генерация thumb при upload достаточна для MVP; в проде — вынести в background job |
@@ -228,7 +225,7 @@
 |---|--------|---------|-------------------|
 | 1 | Нужен ли **web-интерфейс для тренера** (браузер)? | Высокое — меняет архитектуру навигации | Рекомендую: только мобайл в MVP |
 | 2 | **Один аккаунт** может быть и тренером и клиентом одновременно? | Среднее — влияет на auth flow | Нет: роль выбирается при регистрации, не меняется |
-| 3 | Нужны ли **платёжные webhook-ы** (Stripe/RevenueCat) в dev-окружении? | Среднее — Sprint 6 | Да, через `stripe listen --forward-to` CLI для dev |
+| 3 | Нужны ли **платёжные webhook-ы** (RevenueCat/ЮMoney) в dev-окружении? | Среднее — Sprint 6 | Да: RevenueCat — через тестовый sandbox; ЮMoney — через ngrok для dev |
 | 4 | **Video-контент** (видео упражнений)? | Высокое — хранилище, CDN, player | Нет: только текст + фото в MVP |
 | 5 | **Удаление аккаунта** (GDPR right to erasure)? | Низкое для портфолио | Soft-delete (`deletedAt`) в MVP; hard delete — roadmap |
 | 6 | Нужен ли **admin-panel** (super admin)? | Низкое | Нет; управление через psql/Prisma Studio |

@@ -74,7 +74,7 @@
 
 Роли и права; разбивка по фичам; **стратегия монетизации**; тарифные планы; user journeys; границы MVP; roadmap.
 
-> **По монетизации обязательно раскрой:** как обрабатываются платежи и подписки на мобайле. Сравни **Stripe** (web/billing) и **RevenueCat / нативные in-app purchase** (App Store / Google Play) — с учётом комиссий сторов и правил публикации. Объясни разницу между web-подпиской и in-app purchase и какой путь выбираешь для этого продукта и почему.
+> **По монетизации обязательно раскрой:** как обрабатываются платежи и подписки на мобайле. Сравни **ЮMoney** (web-платежи) и **RevenueCat / нативные in-app purchase** (App Store / Google Play) — с учётом комиссий сторов и правил публикации. Объясни разницу между web-подпиской и in-app purchase и какой путь выбираешь для этого продукта и почему.
 
 ### 2. Системная архитектура
 
@@ -108,7 +108,7 @@ email/пароль; JWT access token; **ротация refresh-токенов**;
 
 ### 9. Экраны мобильного приложения
 
-**Тренер:** dashboard, clients, client details, workout builder, analytics, settings.
+**Тренер:** dashboard, clients, client details, workout builder, settings.
 **Клиент:** home, workouts, workout details, progress, photos, profile.
 
 Дай карту навигации (Expo Router) и список состояний экрана.
@@ -125,7 +125,11 @@ OpenAPI 3.1 YAML: маршруты, примеры запросов/ответо
 
 Авторизация; rate limiting; валидация; хеширование паролей (argon2/bcrypt — обоснуй); защита загрузки файлов (тип, размер, скан); аудит-логирование.
 
-### 13. DevOps
+### 13. Подписки и монетизация
+
+RevenueCat (iOS/Android IAP) + ЮMoney (web-платежи); план enforcement middleware; paywall экран; webhook handling.
+
+### 14. DevOps
 
 Docker Compose; workflow локальной разработки; CI/CD pipeline (GitHub Actions); управление окружениями (env, секреты).
 
@@ -133,7 +137,6 @@ Docker Compose; workflow локальной разработки; CI/CD pipeline
 
 Отдельным блоком раскрой:
 
-- **Тестовая стратегия:** что покрывается unit / integration / e2e; инструменты (Jest, React Native Testing Library, Detox/Maestro, supertest); что тестировать в первую очередь при ограниченном времени.
 - **Offline-first (критично для мобайла):** поведение при потере сети, очередь действий (отметка тренировки офлайн), синхронизация, persist кэша TanStack Query.
 - **Оптимистичные апдейты** в TanStack Query: где применяются и как откатываются.
 - **Error & loading states:** единый подход к ошибкам/загрузке/пустым состояниям на фронте.
