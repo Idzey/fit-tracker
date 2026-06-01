@@ -131,7 +131,7 @@ RevenueCat (iOS/Android IAP) + ЮMoney (web-платежи); план enforcemen
 
 ### 14. DevOps
 
-Docker Compose; workflow локальной разработки; CI/CD pipeline (GitHub Actions); управление окружениями (env, секреты).
+Docker Compose; workflow локальной разработки; управление окружениями (env, секреты).
 
 ## НЕФУНКЦИОНАЛЬНЫЕ ТРЕБОВАНИЯ (обязательно)
 

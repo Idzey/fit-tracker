@@ -34,11 +34,10 @@
 | DB | Полная `schema.prisma` (все сущности), первые миграции |
 | Auth skeleton | `POST /auth/register`, `POST /auth/login`, JWT access + refresh (rotation), middleware |
 | Frontend skeleton | Expo Router layout, NativeWind config, React Native Reusables setup, Zustand auth store |
-| CI | GitHub Actions: lint + typecheck на PR |
 
 **Deliverables:** запущенный `docker compose up`, регистрация/логин работают end-to-end, Expo открывается на девайсе.
 
-**Definition of Done:** `docker compose up` без ошибок; Expo подключается к backend; JWT выдаётся и валидируется; CI зелёный.
+**Definition of Done:** `docker compose up` без ошибок; Expo подключается к backend; JWT выдаётся и валидируется.
 
 **Зависимости:** нет.
 
