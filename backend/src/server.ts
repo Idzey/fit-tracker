@@ -7,6 +7,10 @@ import jwt from '@fastify/jwt'
 import { ZodError } from 'zod'
 import { prisma } from './lib/prisma'
 import { authRoutes } from './modules/auth/auth.routes'
+import { clientsRoutes } from './modules/clients/clients.routes'
+import { photosRoutes } from './modules/photos/photos.routes'
+import { uploadsRoutes } from './modules/uploads/uploads.routes'
+import { workoutsRoutes } from './modules/workouts/workouts.routes'
 import { AppError } from './shared/errors'
 import './shared/types' // JWT type augmentation
 
@@ -69,6 +73,10 @@ fastify.get('/health', async () => {
 })
 
 fastify.register(authRoutes, { prefix: '/auth' })
+fastify.register(clientsRoutes, { prefix: '/trainer/clients' })
+fastify.register(uploadsRoutes, { prefix: '/uploads' })
+fastify.register(photosRoutes)
+fastify.register(workoutsRoutes)
 
 // ─── Start ────────────────────────────────────────────────────────────────────
 
