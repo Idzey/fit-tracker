@@ -64,7 +64,7 @@ export function RegisterForm() {
         render={({ field }) => (
           <Input
             label="Password"
-            placeholder="••••••••"
+            placeholder="Password"
             secureTextEntry
             autoComplete="new-password"
             error={errors.password?.message}

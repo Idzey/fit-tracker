@@ -30,7 +30,7 @@ export default function ProgressScreen() {
   const completionPct = progress ? Math.round(progress.completionRate * 100) : 0
   const lastWorkout = progress?.lastWorkoutAt
     ? new Date(progress.lastWorkoutAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-    : '—'
+    : '-'
 
   return (
     <View className="flex-1 bg-background">
@@ -76,8 +76,8 @@ export default function ProgressScreen() {
                   {completionPct >= 80
                     ? 'Excellent consistency! Keep it up.'
                     : completionPct >= 50
-                    ? 'Good work — aim for 80% to see best results.'
-                    : 'Stay consistent — every workout counts.'}
+                    ? 'Good work - aim for 80% to see best results.'
+                    : 'Stay consistent - every workout counts.'}
                 </Text>
               </View>
             </>

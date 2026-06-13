@@ -44,20 +44,18 @@ function SetStepper({
         >
           {exercise.name}
         </Text>
-        {allDone && <Text className="text-success text-lg font-bold">✓</Text>}
+        {allDone ? <Text className="text-success text-sm font-bold">Done</Text> : null}
       </View>
 
       <View className="flex-row flex-wrap">
         {exercise.reps ? (
-          <Text variant="small" muted>{total} × {exercise.reps} reps</Text>
+          <Text variant="small" muted>{total} x {exercise.reps} reps</Text>
         ) : exercise.duration ? (
-          <Text variant="small" muted>{total} × {exercise.duration}s</Text>
+          <Text variant="small" muted>{total} x {exercise.duration}s</Text>
         ) : (
           <Text variant="small" muted>{total} sets</Text>
         )}
-        {exercise.weight ? (
-          <Text variant="small" muted> · {exercise.weight} kg</Text>
-        ) : null}
+        {exercise.weight ? <Text variant="small" muted> - {exercise.weight} kg</Text> : null}
       </View>
 
       <View className="flex-row items-center gap-3">
@@ -66,7 +64,7 @@ function SetStepper({
           disabled={disabled || done <= 0}
           className={`w-10 h-10 rounded-xl bg-primary/10 items-center justify-center ${(disabled || done <= 0) ? 'opacity-35' : ''}`}
         >
-          <Text className="text-primary text-2xl leading-6 font-medium">−</Text>
+          <Text className="text-primary text-2xl leading-6 font-medium">-</Text>
         </Pressable>
         <View className="flex-1 flex-row gap-1.5 flex-wrap">
           {Array.from({ length: total }).map((_, i) => (
@@ -101,7 +99,7 @@ export default function WorkoutExecutionScreen() {
     if (log?.status === 'PENDING') {
       start(logId)
     }
-  }, [log?.status])
+  }, [log?.status, logId, start])
 
   const isCompleted = log?.status === 'COMPLETED'
   const allExercisesDone = log?.exercises.every((e) => e.completedSets >= e.sets) ?? false
@@ -109,7 +107,7 @@ export default function WorkoutExecutionScreen() {
   const handleComplete = () => {
     complete(logId, {
       onSuccess: () => {
-        Alert.alert('Workout done! 🎉', 'Great job completing your workout!', [
+        Alert.alert('Workout done!', 'Great job completing your workout!', [
           { text: 'OK', onPress: () => router.replace('/(client)/') },
         ])
       },
@@ -126,7 +124,7 @@ export default function WorkoutExecutionScreen() {
         >
           <View className="mb-1">
             <Pressable onPress={() => router.back()} hitSlop={12}>
-              <Text variant="small" muted>← Back</Text>
+              <Text variant="small" muted>Back</Text>
             </Pressable>
           </View>
 
@@ -138,9 +136,9 @@ export default function WorkoutExecutionScreen() {
             <>
               <View className="gap-1">
                 <Text variant="subtitle">{log.templateName}</Text>
-                <Text variant="small" muted>Day {log.dayNumber} — {log.dayName}</Text>
+                <Text variant="small" muted>Day {log.dayNumber} - {log.dayName}</Text>
                 {isCompleted ? (
-                  <Text variant="small" className="text-success font-semibold">✓ Completed</Text>
+                  <Text variant="small" className="text-success font-semibold">Completed</Text>
                 ) : null}
               </View>
 
@@ -153,7 +151,11 @@ export default function WorkoutExecutionScreen() {
 
               {!isCompleted ? (
                 <Button
-                  label={allExercisesDone ? 'Complete workout' : `${log.exercises.filter(e => e.completedSets >= e.sets).length}/${log.exercises.length} done — finish early?`}
+                  label={
+                    allExercisesDone
+                      ? 'Complete workout'
+                      : `${log.exercises.filter((e) => e.completedSets >= e.sets).length}/${log.exercises.length} done - finish early?`
+                  }
                   loading={completing}
                   onPress={handleComplete}
                   className={`mt-2 ${!allExercisesDone ? 'opacity-75' : ''}`}
@@ -166,3 +168,4 @@ export default function WorkoutExecutionScreen() {
     </View>
   )
 }
+

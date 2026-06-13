@@ -1,11 +1,11 @@
-import axios from 'axios'
+import axios, { create } from 'axios'
 import { secureStore } from './secure-store'
 import { useAuthStore } from '@/store/auth.store'
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000'
+export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000'
 
-export const apiClient = axios.create({
-  baseURL: BASE_URL,
+export const apiClient = create({
+  baseURL: API_BASE_URL,
   timeout: 15_000,
 })
 
@@ -18,7 +18,7 @@ apiClient.interceptors.request.use((config) => {
 
 // Auto-refresh on 401
 let isRefreshing = false
-let queue: Array<{ resolve: (token: string) => void; reject: (err: unknown) => void }> = []
+let queue: { resolve: (token: string) => void; reject: (err: unknown) => void }[] = []
 
 function flushQueue(error: unknown, token: string | null = null) {
   for (const item of queue) {
@@ -60,7 +60,7 @@ apiClient.interceptors.response.use(
       const { data } = await axios.post<{
         accessToken: string
         refreshToken: string
-      }>(`${BASE_URL}/auth/refresh`, { refreshToken })
+      }>(`${API_BASE_URL}/auth/refresh`, { refreshToken })
 
       setTokens({ accessToken: data.accessToken, refreshToken: data.refreshToken })
       await secureStore.setAccessToken(data.accessToken)

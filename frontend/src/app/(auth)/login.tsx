@@ -28,7 +28,7 @@ export default function LoginScreen() {
               onPress={() => router.push('/(auth)/register')}
               className="flex-row justify-center flex-wrap mt-4"
             >
-              <Text variant="small" muted>Don't have an account? </Text>
+              <Text variant="small" muted>Do not have an account? </Text>
               <Text variant="small" className="text-primary font-semibold">Sign up</Text>
             </Pressable>
           </ScrollView>

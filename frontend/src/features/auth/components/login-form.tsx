@@ -46,7 +46,7 @@ export function LoginForm() {
         render={({ field }) => (
           <Input
             label="Password"
-            placeholder="••••••••"
+            placeholder="Password"
             secureTextEntry
             autoComplete="current-password"
             error={errors.password?.message}

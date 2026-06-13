@@ -8,6 +8,10 @@ import { useSubscription } from '@/features/subscriptions/hooks/use-subscription
 import { useYoomoneyUrl } from '@/features/subscriptions/hooks/use-yoomoney-url'
 import { PLAN_DETAILS, type SubscriptionPlan } from '@/features/subscriptions/types'
 
+function limitLabel(limit: number | null) {
+  return limit == null ? 'unlimited' : String(limit)
+}
+
 function PlanCard({
   plan,
   current,
@@ -20,21 +24,20 @@ function PlanCard({
   loading: boolean
 }) {
   const details = PLAN_DETAILS[plan]
+
   return (
     <View className={`bg-card rounded-2xl p-4 gap-1.5 ${current ? 'border-2 border-primary' : ''}`}>
-      {current && (
+      {current ? (
         <View className="self-start bg-primary/10 rounded-lg px-2 py-0.5 mb-1">
           <Text variant="small" className="text-primary font-semibold">Current plan</Text>
         </View>
-      )}
+      ) : null}
       <Text className="font-bold text-lg text-foreground">{details.label}</Text>
       <Text variant="small" muted>{details.price}</Text>
-      <Text variant="small" muted>
-        Up to {details.clientLimit === 100 ? 'unlimited' : details.clientLimit} clients
-      </Text>
-      {!current && plan !== 'FREE' ? (
+      <Text variant="small" muted>Up to {limitLabel(details.clientLimit)} clients</Text>
+      {!current && plan === 'PRO' ? (
         <Button
-          label={loading ? 'Loading…' : `Upgrade to ${details.label}`}
+          label={loading ? 'Loading...' : `Upgrade to ${details.label}`}
           loading={loading}
           onPress={onUpgrade}
           className="mt-2"
@@ -49,7 +52,7 @@ export default function SubscriptionScreen() {
   const { data: sub, isLoading } = useSubscription()
   const { mutate: getUrl, isPending: gettingUrl } = useYoomoneyUrl()
 
-  const handleUpgrade = (_plan: SubscriptionPlan) => {
+  const handleUpgrade = () => {
     getUrl(undefined, {
       onSuccess: ({ url }) => {
         Linking.openURL(url).catch(() => {
@@ -62,7 +65,9 @@ export default function SubscriptionScreen() {
 
   const periodEnd = sub?.currentPeriodEnd
     ? new Date(sub.currentPeriodEnd).toLocaleDateString('en-US', {
-        year: 'numeric', month: 'long', day: 'numeric',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
       })
     : null
 
@@ -75,7 +80,7 @@ export default function SubscriptionScreen() {
         >
           <View className="flex-row items-center justify-between mb-1">
             <Pressable onPress={() => router.back()} hitSlop={12}>
-              <Text variant="small" muted>← Back</Text>
+              <Text variant="small" muted>Back</Text>
             </Pressable>
             <Text variant="subtitle">Subscription</Text>
             <View style={{ width: 48 }} />
@@ -83,7 +88,7 @@ export default function SubscriptionScreen() {
 
           {isLoading ? (
             <View className="gap-3">
-              {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
+              {[1, 2].map((i) => <SkeletonCard key={i} />)}
             </View>
           ) : sub ? (
             <>
@@ -100,7 +105,15 @@ export default function SubscriptionScreen() {
                 </View>
                 <View className="flex-row justify-between">
                   <Text muted>Clients</Text>
-                  <Text className="font-semibold text-foreground">{sub.currentClientCount} / {sub.clientLimit}</Text>
+                  <Text className="font-semibold text-foreground">
+                    {sub.currentClientCount} / {limitLabel(sub.clientLimit)}
+                  </Text>
+                </View>
+                <View className="flex-row justify-between">
+                  <Text muted>Templates</Text>
+                  <Text className="font-semibold text-foreground">
+                    {sub.currentTemplateCount} / {limitLabel(sub.templateLimit)}
+                  </Text>
                 </View>
                 {periodEnd ? (
                   <View className="flex-row justify-between">
@@ -111,12 +124,12 @@ export default function SubscriptionScreen() {
               </View>
 
               <Text className="font-semibold text-base text-foreground">Available plans</Text>
-              {(['FREE', 'BASIC', 'PRO'] as SubscriptionPlan[]).map((plan) => (
+              {(['FREE', 'PRO'] as SubscriptionPlan[]).map((plan) => (
                 <PlanCard
                   key={plan}
                   plan={plan}
                   current={sub.plan === plan}
-                  onUpgrade={() => handleUpgrade(plan)}
+                  onUpgrade={handleUpgrade}
                   loading={gettingUrl}
                 />
               ))}
@@ -127,3 +140,4 @@ export default function SubscriptionScreen() {
     </View>
   )
 }
+

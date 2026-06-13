@@ -4,13 +4,11 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Text } from '@/components/ui/text'
 import { Avatar } from '@/components/ui/avatar'
 import { SkeletonCard } from '@/components/ui/skeleton'
-import { useAuthStore } from '@/store/auth.store'
 import { useClients } from '@/features/clients/hooks/use-clients'
 import { useNotifications } from '@/features/notifications/hooks/use-notifications'
 
 export default function TrainerDashboard() {
   const router = useRouter()
-  const { user } = useAuthStore()
   const { data: clientsData, isLoading: loadingClients } = useClients()
   const { data: notifData } = useNotifications()
 
@@ -38,7 +36,7 @@ export default function TrainerDashboard() {
               onPress={() => router.push('/(trainer)/notifications')}
               className="p-2 relative"
             >
-              <Text className="text-2xl">🔔</Text>
+              <Text className="text-2xl">N</Text>
               {unread > 0 ? (
                 <View className="absolute top-1 right-1 bg-destructive rounded-full min-w-[18px] h-[18px] items-center justify-center px-0.5">
                   <Text className="text-white text-[10px] font-bold">{unread > 9 ? '9+' : unread}</Text>
@@ -53,7 +51,7 @@ export default function TrainerDashboard() {
               onPress={() => router.push('/(trainer)/clients/new')}
             >
               <View className="bg-card rounded-2xl p-4 gap-2 items-center">
-                <Text className="text-3xl">➕</Text>
+                <Text className="text-3xl">+</Text>
                 <Text variant="small" className="font-semibold text-center text-foreground">New client</Text>
               </View>
             </Pressable>
@@ -62,7 +60,7 @@ export default function TrainerDashboard() {
               onPress={() => router.push('/(trainer)/templates/new')}
             >
               <View className="bg-card rounded-2xl p-4 gap-2 items-center">
-                <Text className="text-3xl">📋</Text>
+                <Text className="text-3xl">T</Text>
                 <Text variant="small" className="font-semibold text-center text-foreground">New template</Text>
               </View>
             </Pressable>
@@ -91,14 +89,14 @@ export default function TrainerDashboard() {
                     <Avatar name={client.name} size="md" />
                     <View className="flex-1 gap-0.5">
                       <Text className="font-semibold text-foreground">{client.name}</Text>
-                      <Text variant="small" muted>{client.email}</Text>
+                      <Text variant="small" muted>{client.activeProgram ?? 'No active program'}</Text>
                     </View>
-                    <Text muted className="text-lg">›</Text>
+                    <Text muted className="text-lg">{'>'}</Text>
                   </View>
                 </Pressable>
               ))
             ) : (
-              <Text variant="small" muted>No clients yet — add your first one!</Text>
+              <Text variant="small" muted>No clients yet - add your first one.</Text>
             )}
           </View>
         </ScrollView>
@@ -106,3 +104,4 @@ export default function TrainerDashboard() {
     </View>
   )
 }
+

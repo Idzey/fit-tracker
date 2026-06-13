@@ -26,7 +26,7 @@ export default function NewClientScreen() {
   const router = useRouter()
   const { mutate: create, isPending } = useCreateClient()
   const { data: sub } = useSubscription()
-  const atLimit = sub != null && sub.currentClientCount >= sub.clientLimit
+  const atLimit = sub != null && sub.clientLimit != null && sub.currentClientCount >= sub.clientLimit
 
   const { control, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),

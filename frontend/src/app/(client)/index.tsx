@@ -40,7 +40,7 @@ function WorkoutCard({ log, onPress }: { log: WorkoutLog; onPress: () => void })
               {log.status === 'COMPLETED' ? 'Done' : log.status === 'IN_PROGRESS' ? 'Active' : 'Start'}
             </Text>
           </View>
-          <Text variant="small" muted>Day {log.dayNumber} — {log.dayName}</Text>
+          <Text variant="small" muted>Day {log.dayNumber} - {log.dayName}</Text>
           {total > 0 ? (
             <Text variant="small" muted>{done}/{total} exercises</Text>
           ) : null}

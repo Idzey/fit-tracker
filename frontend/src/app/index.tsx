@@ -36,7 +36,7 @@ export default function Index() {
     }
 
     restoreSession()
-  }, [])
+  }, [logout, setAuth])
 
   if (!ready) return <View className="flex-1 bg-background" />
 

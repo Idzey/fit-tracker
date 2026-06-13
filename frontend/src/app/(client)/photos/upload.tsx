@@ -24,11 +24,13 @@ export default function UploadPhotoScreen() {
       Alert.alert('Permission required', 'Grant photo library access to upload photos.')
       return
     }
+
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       quality: 0.85,
       allowsEditing: true,
     })
+
     if (!result.canceled && result.assets[0]) {
       const asset = result.assets[0]
       setUri(asset.uri)
@@ -39,10 +41,15 @@ export default function UploadPhotoScreen() {
   const upload = async () => {
     if (!uri) return
     setUploading(true)
-    try {
-      const { uploadUrl, key } = await presign({ mimeType })
 
+    try {
       const blob = await fetch(uri).then((r) => r.blob())
+      const { uploadUrl, photoId } = await presign({
+        contentType: mimeType,
+        size: blob.size,
+        takenAt: new Date().toISOString(),
+      })
+
       const putRes = await fetch(uploadUrl, {
         method: 'PUT',
         body: blob,
@@ -50,7 +57,7 @@ export default function UploadPhotoScreen() {
       })
       if (!putRes.ok) throw new Error('Upload failed')
 
-      await confirm({ key, takenAt: new Date().toISOString() })
+      await confirm({ photoId })
       router.replace('/(client)/photos')
     } catch {
       Alert.alert('Upload failed', 'Please try again.')
@@ -68,7 +75,7 @@ export default function UploadPhotoScreen() {
         >
           <View className="flex-row items-center justify-between mb-1">
             <Pressable onPress={() => router.back()} hitSlop={12}>
-              <Text variant="small" muted>← Back</Text>
+              <Text variant="small" muted>Back</Text>
             </Pressable>
             <Text variant="subtitle">Upload Photo</Text>
             <View style={{ width: 48 }} />
@@ -79,7 +86,7 @@ export default function UploadPhotoScreen() {
               <Image source={{ uri }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
             ) : (
               <View className="flex-1 bg-muted items-center justify-center gap-2">
-                <Text className="text-5xl">📷</Text>
+                <Text className="text-4xl">+</Text>
                 <Text variant="small" muted>Tap to select a photo</Text>
               </View>
             )}
@@ -87,16 +94,8 @@ export default function UploadPhotoScreen() {
 
           {uri ? (
             <View className="gap-3">
-              <Button
-                label="Choose different photo"
-                variant="secondary"
-                onPress={pick}
-              />
-              <Button
-                label={uploading ? 'Uploading…' : 'Upload'}
-                loading={uploading}
-                onPress={upload}
-              />
+              <Button label="Choose different photo" variant="secondary" onPress={pick} />
+              <Button label={uploading ? 'Uploading...' : 'Upload'} loading={uploading} onPress={upload} />
             </View>
           ) : null}
         </ScrollView>
@@ -104,3 +103,4 @@ export default function UploadPhotoScreen() {
     </View>
   )
 }
+

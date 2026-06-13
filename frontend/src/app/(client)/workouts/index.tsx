@@ -50,7 +50,7 @@ function WorkoutRow({ log, onPress }: { log: WorkoutLog; onPress: () => void }) 
         <View className="flex-1 gap-0.5">
           <Text className="font-semibold text-foreground" numberOfLines={1}>{log.templateName}</Text>
           <Text variant="small" muted>
-            Day {log.dayNumber} — {log.dayName}
+            Day {log.dayNumber} - {log.dayName}
             {total > 0 ? ` · ${done}/${total} ex` : ''}
             {date ? ` · ${date}` : ''}
           </Text>

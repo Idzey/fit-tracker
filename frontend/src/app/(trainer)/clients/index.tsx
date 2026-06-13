@@ -9,12 +9,16 @@ import { ClientCard } from '@/features/clients/components/client-card'
 import { useClients } from '@/features/clients/hooks/use-clients'
 import { useSubscription } from '@/features/subscriptions/hooks/use-subscription'
 
+function limitLabel(limit: number | null) {
+  return limit == null ? 'unlimited' : String(limit)
+}
+
 export default function ClientsScreen() {
   const router = useRouter()
   const [search, setSearch] = useState('')
   const { data, isLoading } = useClients(search || undefined)
   const { data: sub } = useSubscription()
-  const atLimit = sub != null && sub.currentClientCount >= sub.clientLimit
+  const atLimit = sub != null && sub.clientLimit != null && sub.currentClientCount >= sub.clientLimit
 
   return (
     <View className="flex-1 bg-background">
@@ -23,7 +27,7 @@ export default function ClientsScreen() {
           <Text variant="subtitle">Clients</Text>
           {data ? (
             <Text variant="small" muted>
-              {data.pagination.total} total{sub ? ` · ${sub.currentClientCount}/${sub.clientLimit}` : ''}
+              {data.pagination.total} total{sub ? ` - ${sub.currentClientCount}/${limitLabel(sub.clientLimit)}` : ''}
             </Text>
           ) : null}
         </View>
@@ -32,7 +36,7 @@ export default function ClientsScreen() {
           <TextInput
             value={search}
             onChangeText={setSearch}
-            placeholder="Search by name or email…"
+            placeholder="Search by name or email..."
             placeholderTextColor="#9ca3af"
             className="text-foreground text-base"
             autoCapitalize="none"
@@ -81,3 +85,4 @@ export default function ClientsScreen() {
     </View>
   )
 }
+
