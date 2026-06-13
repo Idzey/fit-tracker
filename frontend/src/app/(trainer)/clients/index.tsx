@@ -6,6 +6,7 @@ import { ThemedText } from '@/components/themed-text'
 import { ThemedView } from '@/components/themed-view'
 import { ClientCard } from '@/features/clients/components/client-card'
 import { useClients } from '@/features/clients/hooks/use-clients'
+import { useSubscription } from '@/features/subscriptions/hooks/use-subscription'
 import { useTheme } from '@/hooks/use-theme'
 import { EmptyState } from '@/shared/components/empty-state'
 import { SkeletonCard } from '@/shared/components/skeleton'
@@ -16,6 +17,8 @@ export default function ClientsScreen() {
   const theme = useTheme()
   const [search, setSearch] = useState('')
   const { data, isLoading } = useClients(search || undefined)
+  const { data: sub } = useSubscription()
+  const atLimit = sub != null && sub.currentClientCount >= sub.clientLimit
 
   return (
     <ThemedView style={styles.container}>
@@ -25,6 +28,7 @@ export default function ClientsScreen() {
           {data ? (
             <ThemedText type="small" themeColor="textSecondary">
               {data.pagination.total} total
+              {sub ? ` · ${sub.currentClientCount}/${sub.clientLimit}` : ''}
             </ThemedText>
           ) : null}
         </View>
@@ -72,7 +76,7 @@ export default function ClientsScreen() {
         )}
 
         <Pressable
-          style={styles.fab}
+          style={[styles.fab, atLimit && styles.fabDisabled]}
           onPress={() => router.push('/(trainer)/clients/new')}
         >
           <ThemedText style={styles.fabIcon}>+</ThemedText>
@@ -122,5 +126,6 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
+  fabDisabled: { backgroundColor: '#9ca3af' },
   fabIcon: { color: '#fff', fontSize: 28, lineHeight: 32, fontWeight: '300' },
 })

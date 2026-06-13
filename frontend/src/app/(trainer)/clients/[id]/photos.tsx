@@ -1,11 +1,11 @@
-import { Alert, Dimensions, FlatList, Pressable, StyleSheet, View } from 'react-native'
+import { Dimensions, FlatList, StyleSheet, View } from 'react-native'
 import { Image } from 'expo-image'
-import { useRouter } from 'expo-router'
+import { useLocalSearchParams, useRouter } from 'expo-router'
+import { Pressable } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { ThemedText } from '@/components/themed-text'
 import { ThemedView } from '@/components/themed-view'
-import { useMyPhotos } from '@/features/photos/hooks/use-my-photos'
-import { useDeletePhoto } from '@/features/photos/hooks/use-delete-photo'
+import { useClientPhotos } from '@/features/photos/hooks/use-client-photos'
 import type { Photo } from '@/features/photos/types'
 import { Spacing } from '@/constants/theme'
 import { EmptyState } from '@/shared/components/empty-state'
@@ -16,42 +16,35 @@ const GAP = 3
 const SCREEN_W = Dimensions.get('window').width
 const TILE = (SCREEN_W - Spacing.four * 2 - GAP * (COLS - 1)) / COLS
 
-function PhotoTile({ photo, onDelete }: { photo: Photo; onDelete: () => void }) {
+function PhotoTile({ photo }: { photo: Photo }) {
+  const date = new Date(photo.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   return (
-    <Pressable
-      onLongPress={() => {
-        Alert.alert('Delete photo?', 'This cannot be undone.', [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Delete', style: 'destructive', onPress: onDelete },
-        ])
-      }}
-    >
+    <View>
       <Image
         source={{ uri: photo.thumbnailUrl ?? photo.url }}
         style={styles.tile}
         contentFit="cover"
         transition={200}
       />
-    </Pressable>
+      <ThemedText type="small" themeColor="textSecondary" style={styles.tileDate}>{date}</ThemedText>
+    </View>
   )
 }
 
-export default function PhotosScreen() {
+export default function ClientPhotosScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>()
   const router = useRouter()
-  const { data: photos, isLoading } = useMyPhotos()
-  const { mutate: deletePhoto } = useDeletePhoto()
+  const { data: photos, isLoading } = useClientPhotos(id)
 
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.header}>
-          <ThemedText type="subtitle">Photos</ThemedText>
-          <Pressable
-            onPress={() => router.push('/(client)/photos/upload')}
-            style={styles.uploadBtn}
-          >
-            <ThemedText type="small" style={styles.uploadBtnText}>+ Upload</ThemedText>
+          <Pressable onPress={() => router.back()} hitSlop={12}>
+            <ThemedText type="default" themeColor="textSecondary">← Back</ThemedText>
           </Pressable>
+          <ThemedText type="subtitle">Client Photos</ThemedText>
+          <View style={{ width: 48 }} />
         </View>
 
         {isLoading ? (
@@ -67,16 +60,12 @@ export default function PhotosScreen() {
             numColumns={COLS}
             columnWrapperStyle={styles.row}
             contentContainerStyle={styles.listContent}
-            renderItem={({ item }) => (
-              <PhotoTile photo={item} onDelete={() => deletePhoto(item.id)} />
-            )}
+            renderItem={({ item }) => <PhotoTile photo={item} />}
           />
         ) : (
           <EmptyState
             title="No photos yet"
-            subtitle="Track your transformation by uploading progress photos."
-            action="Upload first photo"
-            onAction={() => router.push('/(client)/photos/upload')}
+            subtitle="The client hasn't uploaded any progress photos."
             style={styles.empty}
           />
         )}
@@ -89,20 +78,19 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   safe: { flex: 1 },
   header: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: Spacing.four, paddingTop: Spacing.four, paddingBottom: Spacing.two,
+    flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.four,
+    paddingTop: Spacing.four,
+    paddingBottom: Spacing.two,
   },
-  uploadBtn: {
-    backgroundColor: '#3c87f7', borderRadius: 12,
-    paddingHorizontal: 14, paddingVertical: 8,
-  },
-  uploadBtnText: { color: '#fff', fontWeight: '600' },
   grid: {
     flexDirection: 'row', flexWrap: 'wrap',
     paddingHorizontal: Spacing.four, gap: GAP,
   },
   listContent: { paddingHorizontal: Spacing.four, paddingBottom: 40 },
-  row: { gap: GAP, marginBottom: GAP },
+  row: { gap: GAP, marginBottom: GAP + 18 },
   tile: { width: TILE, height: TILE, borderRadius: 6 },
+  tileDate: { textAlign: 'center', marginTop: 2, fontSize: 10 },
   empty: { margin: Spacing.four },
 })

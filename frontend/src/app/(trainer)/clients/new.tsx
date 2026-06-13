@@ -7,6 +7,8 @@ import { z } from 'zod'
 import { ThemedText } from '@/components/themed-text'
 import { ThemedView } from '@/components/themed-view'
 import { useCreateClient } from '@/features/clients/hooks/use-create-client'
+import { useSubscription } from '@/features/subscriptions/hooks/use-subscription'
+import { Paywall } from '@/features/subscriptions/components/paywall'
 import { Spacing } from '@/constants/theme'
 import { Button } from '@/shared/components/button'
 import { Input } from '@/shared/components/input'
@@ -25,6 +27,8 @@ type FormData = z.infer<typeof schema>
 export default function NewClientScreen() {
   const router = useRouter()
   const { mutate: create, isPending } = useCreateClient()
+  const { data: sub } = useSubscription()
+  const atLimit = sub != null && sub.currentClientCount >= sub.clientLimit
 
   const { control, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -47,6 +51,25 @@ export default function NewClientScreen() {
           Alert.alert('Error', msg ?? 'Failed to create client')
         },
       },
+    )
+  }
+
+  if (atLimit) {
+    return (
+      <ThemedView style={styles.container}>
+        <SafeAreaView style={styles.safe} edges={['top']}>
+          <View style={styles.headerRow}>
+            <Pressable onPress={() => router.back()} hitSlop={12}>
+              <ThemedText type="default" themeColor="textSecondary">← Back</ThemedText>
+            </Pressable>
+            <ThemedText type="subtitle">New client</ThemedText>
+          </View>
+          <Paywall
+            title={`Client limit reached (${sub.currentClientCount}/${sub.clientLimit})`}
+            message="Upgrade your plan to add more clients."
+          />
+        </SafeAreaView>
+      </ThemedView>
     )
   }
 

@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/shared/lib/api-client'
 import type { ClientDetail } from '../types'
 import { clientKeys } from './query-keys'
+import { subscriptionKeys } from '@/features/subscriptions/hooks/query-keys'
 
 export interface CreateClientData {
   name: string
@@ -20,6 +21,7 @@ export function useCreateClient() {
       apiClient.post<ClientDetail>('/trainer/clients', data).then((r) => r.data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: clientKeys.all })
+      qc.invalidateQueries({ queryKey: subscriptionKeys.mine() })
     },
   })
 }

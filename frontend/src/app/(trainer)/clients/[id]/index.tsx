@@ -106,6 +106,22 @@ export default function ClientDetailScreen() {
                 )}
               </View>
 
+              {/* Progress & Photos */}
+              <View style={styles.actionRow}>
+                <Pressable
+                  onPress={() => router.push(`/(trainer)/clients/${id}/progress`)}
+                  style={[styles.actionBtn, { flex: 1 }]}
+                >
+                  <ThemedText type="small" style={styles.actionBtnText}>📊 Progress</ThemedText>
+                </Pressable>
+                <Pressable
+                  onPress={() => router.push(`/(trainer)/clients/${id}/photos`)}
+                  style={[styles.actionBtn, { flex: 1 }]}
+                >
+                  <ThemedText type="small" style={styles.actionBtnText}>📷 Photos</ThemedText>
+                </Pressable>
+              </View>
+
               {/* Danger */}
               <Pressable onPress={handleDelete} style={styles.deleteBtn}>
                 <ThemedText type="small" style={styles.deleteText}>Remove client</ThemedText>
@@ -136,6 +152,12 @@ const styles = StyleSheet.create({
   sectionTitle: { fontWeight: '600' },
   assignBtn: { color: '#3c87f7', fontWeight: '600' },
   programRow: { borderRadius: 12, padding: 12, gap: 2 },
+  actionRow: { flexDirection: 'row', gap: 12 },
+  actionBtn: {
+    backgroundColor: '#3c87f710', borderRadius: 14,
+    padding: 14, alignItems: 'center',
+  },
+  actionBtnText: { color: '#3c87f7', fontWeight: '600' },
   deleteBtn: { alignSelf: 'center', paddingVertical: 12 },
   deleteText: { color: '#e53e3e' },
 })
