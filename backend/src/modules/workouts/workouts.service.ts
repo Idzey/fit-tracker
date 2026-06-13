@@ -1,6 +1,7 @@
-import { WorkoutStatus } from '@prisma/client'
+import { SubscriptionPlan, WorkoutStatus } from '@prisma/client'
 import { prisma } from '../../lib/prisma'
 import { BadRequestError, NotFoundError, UnauthorizedError } from '../../shared/errors'
+import { notifyWorkoutCompleted } from '../notifications/notifications.service'
 import type {
   AssignProgramInput,
   CreateTemplateInput,
@@ -269,6 +270,15 @@ export async function listTemplates(userId: string) {
 
 export async function createTemplate(userId: string, input: CreateTemplateInput) {
   const trainerId = await getTrainerProfileId(userId)
+  const subscription = await prisma.subscription.findUnique({ where: { trainerId } })
+
+  if (!subscription || subscription.plan === SubscriptionPlan.FREE) {
+    const templatesCount = await prisma.workoutTemplate.count({ where: { trainerId } })
+    if (templatesCount >= 5) {
+      throw new BadRequestError('PLAN_LIMIT_REACHED', 'Free plan allows up to 5 workout templates')
+    }
+  }
+
   const template = await prisma.workoutTemplate.create({
     data: {
       trainerId,
@@ -543,13 +553,26 @@ export async function completeWorkout(userId: string, logId: string) {
 
   if (log.status === WorkoutStatus.COMPLETED) return mapWorkoutLogDetail(log)
 
-  await prisma.workoutLog.update({
+  const completed = await prisma.workoutLog.update({
     where: { id: log.id },
     data: {
       status: WorkoutStatus.COMPLETED,
       startedAt: log.startedAt ?? new Date(),
       completedAt: new Date(),
     },
+    include: {
+      client: { include: { trainer: { select: { userId: true } } } },
+      assignedProgram: { include: { template: { select: { name: true } } } },
+    },
+  })
+
+  await notifyWorkoutCompleted({
+    trainerUserId: completed.client.trainer.userId,
+    clientId: completed.clientId,
+    clientName: completed.client.name,
+    workoutLogId: completed.id,
+    templateName: completed.assignedProgram.template.name,
+    completedAt: completed.completedAt!,
   })
 
   return getWorkoutLog(userId, logId)
@@ -591,12 +614,25 @@ export async function updateExerciseLog(
     exerciseLogs.length > 0 && exerciseLogs.every((item) => item.completedSets >= item.exercise.sets)
 
   if (isWorkoutCompleted) {
-    await prisma.workoutLog.update({
+    const completed = await prisma.workoutLog.update({
       where: { id: log.id },
       data: {
         status: WorkoutStatus.COMPLETED,
         completedAt: new Date(),
       },
+      include: {
+        client: { include: { trainer: { select: { userId: true } } } },
+        assignedProgram: { include: { template: { select: { name: true } } } },
+      },
+    })
+
+    await notifyWorkoutCompleted({
+      trainerUserId: completed.client.trainer.userId,
+      clientId: completed.clientId,
+      clientName: completed.client.name,
+      workoutLogId: completed.id,
+      templateName: completed.assignedProgram.template.name,
+      completedAt: completed.completedAt!,
     })
   }
 

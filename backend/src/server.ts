@@ -8,7 +8,9 @@ import { ZodError } from 'zod'
 import { prisma } from './lib/prisma'
 import { authRoutes } from './modules/auth/auth.routes'
 import { clientsRoutes } from './modules/clients/clients.routes'
+import { notificationsRoutes } from './modules/notifications/notifications.routes'
 import { photosRoutes } from './modules/photos/photos.routes'
+import { subscriptionsRoutes } from './modules/subscriptions/subscriptions.routes'
 import { uploadsRoutes } from './modules/uploads/uploads.routes'
 import { workoutsRoutes } from './modules/workouts/workouts.routes'
 import { AppError } from './shared/errors'
@@ -76,6 +78,8 @@ fastify.register(authRoutes, { prefix: '/auth' })
 fastify.register(clientsRoutes, { prefix: '/trainer/clients' })
 fastify.register(uploadsRoutes, { prefix: '/uploads' })
 fastify.register(photosRoutes)
+fastify.register(notificationsRoutes)
+fastify.register(subscriptionsRoutes)
 fastify.register(workoutsRoutes)
 
 // ─── Start ────────────────────────────────────────────────────────────────────

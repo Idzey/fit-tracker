@@ -2,10 +2,15 @@ import crypto from 'node:crypto'
 import { PhotoStatus } from '@prisma/client'
 import { prisma } from '../../lib/prisma'
 import { BadRequestError, NotFoundError, UnauthorizedError } from '../../shared/errors'
-import type { PresignUploadInput } from './uploads.schema'
+import { notifyPhotoUploaded } from '../notifications/notifications.service'
 import { generateThumbnail, getExtension, getObjectHead, getUploadUrl } from '../photos/storage'
+import type { PresignUploadInput } from './uploads.schema'
 
 const MAX_PHOTO_SIZE = 10 * 1024 * 1024
+const STORAGE_LIMITS = {
+  FREE: 500 * 1024 * 1024,
+  PRO: 10 * 1024 * 1024 * 1024,
+} as const
 
 async function getClientProfileId(userId: string) {
   const client = await prisma.clientProfile.findFirst({
@@ -19,6 +24,8 @@ async function getClientProfileId(userId: string) {
 
 export async function createPresignedUploadUrl(userId: string, input: PresignUploadInput) {
   const clientId = await getClientProfileId(userId)
+  await enforceStorageLimit(clientId, input.size)
+
   const photoId = crypto.randomUUID()
   const extension = getExtension(input.contentType)
   const key = `photos/${clientId}/${photoId}/original.${extension}`
@@ -40,6 +47,32 @@ export async function createPresignedUploadUrl(userId: string, input: PresignUpl
     photoId,
     key,
     expiresAt: new Date(Date.now() + 300_000),
+  }
+}
+
+async function enforceStorageLimit(clientId: string, nextUploadSize: number) {
+  const client = await prisma.clientProfile.findUnique({
+    where: { id: clientId },
+    select: {
+      trainerId: true,
+      trainer: {
+        select: {
+          subscription: { select: { plan: true } },
+        },
+      },
+    },
+  })
+  const plan = client?.trainer.subscription?.plan ?? 'FREE'
+  const aggregate = await prisma.progressPhoto.aggregate({
+    where: { client: { trainerId: client?.trainerId ?? '' } },
+    _sum: { size: true },
+  })
+
+  const used = aggregate._sum.size ?? 0
+  const limit = STORAGE_LIMITS[plan]
+
+  if (used + nextUploadSize > limit) {
+    throw new BadRequestError('STORAGE_QUOTA_EXCEEDED', 'Storage quota exceeded for current plan')
   }
 }
 
@@ -79,14 +112,26 @@ export async function confirmUpload(userId: string, photoId: string) {
 
   try {
     const thumbnail = await generateThumbnail(photo.key)
-    return prisma.progressPhoto.update({
+    const readyPhoto = await prisma.progressPhoto.update({
       where: { id: photo.id },
       data: {
         status: PhotoStatus.READY,
         thumbnailKey: thumbnail.thumbnailKey,
         size: thumbnail.size,
       },
+      include: {
+        client: { include: { trainer: { select: { userId: true } } } },
+      },
     })
+
+    await notifyPhotoUploaded({
+      trainerUserId: readyPhoto.client.trainer.userId,
+      clientId: readyPhoto.clientId,
+      clientName: readyPhoto.client.name,
+      photoId: readyPhoto.id,
+    })
+
+    return readyPhoto
   } catch {
     await prisma.progressPhoto.update({
       where: { id: photo.id },
