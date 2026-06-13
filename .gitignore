@@ -45,6 +45,9 @@ Thumbs.db
 .vscode/
 .idea/
 
+# Codex/Claude worktrees
+.claude/worktrees/
+
 # Backend
 backend/dist/
 backend/build/
