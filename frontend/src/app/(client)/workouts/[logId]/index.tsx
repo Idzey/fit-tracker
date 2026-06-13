@@ -108,7 +108,7 @@ export default function WorkoutExecutionScreen() {
     complete(logId, {
       onSuccess: () => {
         Alert.alert('Workout done!', 'Great job completing your workout!', [
-          { text: 'OK', onPress: () => router.replace('/(client)/') },
+          { text: 'OK', onPress: () => router.replace('/(client)') },
         ])
       },
       onError: () => Alert.alert('Error', 'Failed to complete workout'),

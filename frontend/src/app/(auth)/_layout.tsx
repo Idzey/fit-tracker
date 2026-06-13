@@ -5,7 +5,7 @@ export default function AuthLayout() {
   const { isAuthenticated, user } = useAuthStore()
 
   if (isAuthenticated) {
-    return <Redirect href={user?.role === 'TRAINER' ? '/(trainer)/' : '/(client)/'} />
+    return <Redirect href={user?.role === 'TRAINER' ? '/(trainer)' : '/(client)'} />
   }
 
   return (

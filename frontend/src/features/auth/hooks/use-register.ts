@@ -22,7 +22,7 @@ export function useRegister() {
       await secureStore.setAccessToken(data.accessToken)
       await secureStore.setRefreshToken(data.refreshToken)
       setAuth({ user: data.user, accessToken: data.accessToken, refreshToken: data.refreshToken })
-      router.replace('/(trainer)/')
+      router.replace('/(trainer)')
     },
   })
 }

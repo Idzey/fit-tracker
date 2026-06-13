@@ -41,7 +41,7 @@ export default function Index() {
   if (!ready) return <View className="flex-1 bg-background" />
 
   if (isAuthenticated) {
-    return <Redirect href={user?.role === 'TRAINER' ? '/(trainer)/' : '/(client)/'} />
+    return <Redirect href={user?.role === 'TRAINER' ? '/(trainer)' : '/(client)'} />
   }
 
   return <Redirect href="/(auth)/login" />

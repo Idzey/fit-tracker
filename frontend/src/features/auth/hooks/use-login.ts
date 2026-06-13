@@ -22,7 +22,7 @@ export function useLogin() {
       await secureStore.setAccessToken(data.accessToken)
       await secureStore.setRefreshToken(data.refreshToken)
       setAuth({ user: data.user, accessToken: data.accessToken, refreshToken: data.refreshToken })
-      router.replace(data.user.role === 'TRAINER' ? '/(trainer)/' : '/(client)/')
+      router.replace(data.user.role === 'TRAINER' ? '/(trainer)' : '/(client)')
     },
   })
 }
