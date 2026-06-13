@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query'
 import { apiClient } from '@/shared/lib/api-client'
-import type { SubscriptionPlan, YoomoneyUrlResponse } from '../types'
+import type { YoomoneyUrlResponse } from '../types'
 
 export function useYoomoneyUrl() {
   return useMutation({

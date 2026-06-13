@@ -6,10 +6,10 @@ export function useMarkAllRead() {
   const qc = useQueryClient()
 
   return useMutation({
-    mutationFn: () =>
-      apiClient.patch('/notifications/read-all').then((r) => r.data),
+    mutationFn: () => apiClient.post('/notifications/read-all').then((r) => r.data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: notificationKeys.list() })
     },
   })
 }
+

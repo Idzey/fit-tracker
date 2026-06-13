@@ -1,15 +1,13 @@
 import { useState } from 'react'
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native'
+import { Alert, Pressable, ScrollView, View } from 'react-native'
 import { Image } from 'expo-image'
 import * as ImagePicker from 'expo-image-picker'
 import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { ThemedText } from '@/components/themed-text'
-import { ThemedView } from '@/components/themed-view'
+import { Text } from '@/components/ui/text'
+import { Button } from '@/components/ui/button'
 import { usePresignUpload } from '@/features/photos/hooks/use-presign-upload'
 import { useConfirmUpload } from '@/features/photos/hooks/use-confirm-upload'
-import { Spacing } from '@/constants/theme'
-import { Button } from '@/shared/components/button'
 
 export default function UploadPhotoScreen() {
   const router = useRouter()
@@ -26,11 +24,13 @@ export default function UploadPhotoScreen() {
       Alert.alert('Permission required', 'Grant photo library access to upload photos.')
       return
     }
+
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       quality: 0.85,
       allowsEditing: true,
     })
+
     if (!result.canceled && result.assets[0]) {
       const asset = result.assets[0]
       setUri(asset.uri)
@@ -41,10 +41,15 @@ export default function UploadPhotoScreen() {
   const upload = async () => {
     if (!uri) return
     setUploading(true)
-    try {
-      const { uploadUrl, key } = await presign({ mimeType })
 
+    try {
       const blob = await fetch(uri).then((r) => r.blob())
+      const { uploadUrl, photoId } = await presign({
+        contentType: mimeType,
+        size: blob.size,
+        takenAt: new Date().toISOString(),
+      })
+
       const putRes = await fetch(uploadUrl, {
         method: 'PUT',
         body: blob,
@@ -52,7 +57,7 @@ export default function UploadPhotoScreen() {
       })
       if (!putRes.ok) throw new Error('Upload failed')
 
-      await confirm({ key, takenAt: new Date().toISOString() })
+      await confirm({ photoId })
       router.replace('/(client)/photos')
     } catch {
       Alert.alert('Upload failed', 'Please try again.')
@@ -62,66 +67,40 @@ export default function UploadPhotoScreen() {
   }
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safe} edges={['top']}>
-        <ScrollView contentContainerStyle={styles.scroll}>
-          <View style={styles.header}>
+    <View className="flex-1 bg-background">
+      <SafeAreaView className="flex-1" edges={['top']}>
+        <ScrollView
+          contentContainerClassName="p-6 gap-4 pb-10"
+          showsVerticalScrollIndicator={false}
+        >
+          <View className="flex-row items-center justify-between mb-1">
             <Pressable onPress={() => router.back()} hitSlop={12}>
-              <ThemedText type="default" themeColor="textSecondary">← Back</ThemedText>
+              <Text variant="small" muted>Back</Text>
             </Pressable>
-            <ThemedText type="subtitle">Upload Photo</ThemedText>
+            <Text variant="subtitle">Upload Photo</Text>
             <View style={{ width: 48 }} />
           </View>
 
-          <Pressable onPress={pick} style={styles.pickZone}>
+          <Pressable onPress={pick} className="rounded-3xl overflow-hidden" style={{ height: 340 }}>
             {uri ? (
-              <Image source={{ uri }} style={styles.preview} contentFit="cover" />
+              <Image source={{ uri }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
             ) : (
-              <View style={styles.placeholder}>
-                <ThemedText type="default" themeColor="textSecondary" style={styles.placeholderIcon}>
-                  📷
-                </ThemedText>
-                <ThemedText type="small" themeColor="textSecondary">Tap to select a photo</ThemedText>
+              <View className="flex-1 bg-muted items-center justify-center gap-2">
+                <Text className="text-4xl">+</Text>
+                <Text variant="small" muted>Tap to select a photo</Text>
               </View>
             )}
           </Pressable>
 
           {uri ? (
-            <View style={styles.actions}>
-              <Button
-                label="Choose different photo"
-                variant="secondary"
-                onPress={pick}
-                style={styles.btnAlt}
-              />
-              <Button
-                label={uploading ? 'Uploading…' : 'Upload'}
-                loading={uploading}
-                onPress={upload}
-              />
+            <View className="gap-3">
+              <Button label="Choose different photo" variant="secondary" onPress={pick} />
+              <Button label={uploading ? 'Uploading...' : 'Upload'} loading={uploading} onPress={upload} />
             </View>
           ) : null}
         </ScrollView>
       </SafeAreaView>
-    </ThemedView>
+    </View>
   )
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  safe: { flex: 1 },
-  scroll: { padding: Spacing.four, gap: Spacing.three, paddingBottom: 40 },
-  header: {
-    flexDirection: 'row', alignItems: 'center',
-    justifyContent: 'space-between', marginBottom: 4,
-  },
-  pickZone: { borderRadius: 20, overflow: 'hidden', height: 340 },
-  preview: { width: '100%', height: '100%' },
-  placeholder: {
-    flex: 1, backgroundColor: '#f3f4f6',
-    alignItems: 'center', justifyContent: 'center', gap: 8,
-  },
-  placeholderIcon: { fontSize: 40 },
-  actions: { gap: 12 },
-  btnAlt: {},
-})

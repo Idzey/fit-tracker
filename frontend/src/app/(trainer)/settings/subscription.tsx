@@ -1,14 +1,16 @@
-import { Alert, Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native'
+import { Alert, Linking, Pressable, ScrollView, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { ThemedText } from '@/components/themed-text'
-import { ThemedView } from '@/components/themed-view'
+import { Text } from '@/components/ui/text'
+import { Button } from '@/components/ui/button'
+import { SkeletonCard } from '@/components/ui/skeleton'
 import { useSubscription } from '@/features/subscriptions/hooks/use-subscription'
 import { useYoomoneyUrl } from '@/features/subscriptions/hooks/use-yoomoney-url'
 import { PLAN_DETAILS, type SubscriptionPlan } from '@/features/subscriptions/types'
-import { Spacing } from '@/constants/theme'
-import { Button } from '@/shared/components/button'
-import { SkeletonCard } from '@/shared/components/skeleton'
+
+function limitLabel(limit: number | null) {
+  return limit == null ? 'unlimited' : String(limit)
+}
 
 function PlanCard({
   plan,
@@ -22,30 +24,26 @@ function PlanCard({
   loading: boolean
 }) {
   const details = PLAN_DETAILS[plan]
+
   return (
-    <ThemedView
-      type="backgroundElement"
-      style={[styles.planCard, current && styles.planCardActive]}
-    >
-      {current && (
-        <View style={styles.currentBadge}>
-          <ThemedText style={styles.currentBadgeText}>Current plan</ThemedText>
+    <View className={`bg-card rounded-2xl p-4 gap-1.5 ${current ? 'border-2 border-primary' : ''}`}>
+      {current ? (
+        <View className="self-start bg-primary/10 rounded-lg px-2 py-0.5 mb-1">
+          <Text variant="small" className="text-primary font-semibold">Current plan</Text>
         </View>
-      )}
-      <ThemedText type="default" style={styles.planName}>{details.label}</ThemedText>
-      <ThemedText type="small" themeColor="textSecondary">{details.price}</ThemedText>
-      <ThemedText type="small" themeColor="textSecondary">
-        Up to {details.clientLimit === 100 ? 'unlimited' : details.clientLimit} clients
-      </ThemedText>
-      {!current && plan !== 'FREE' ? (
+      ) : null}
+      <Text className="font-bold text-lg text-foreground">{details.label}</Text>
+      <Text variant="small" muted>{details.price}</Text>
+      <Text variant="small" muted>Up to {limitLabel(details.clientLimit)} clients</Text>
+      {!current && plan === 'PRO' ? (
         <Button
-          label={loading ? 'Loading…' : `Upgrade to ${details.label}`}
+          label={loading ? 'Loading...' : `Upgrade to ${details.label}`}
           loading={loading}
           onPress={onUpgrade}
-          style={styles.upgradeBtn}
+          className="mt-2"
         />
       ) : null}
-    </ThemedView>
+    </View>
   )
 }
 
@@ -54,7 +52,7 @@ export default function SubscriptionScreen() {
   const { data: sub, isLoading } = useSubscription()
   const { mutate: getUrl, isPending: gettingUrl } = useYoomoneyUrl()
 
-  const handleUpgrade = (_plan: SubscriptionPlan) => {
+  const handleUpgrade = () => {
     getUrl(undefined, {
       onSuccess: ({ url }) => {
         Linking.openURL(url).catch(() => {
@@ -67,65 +65,71 @@ export default function SubscriptionScreen() {
 
   const periodEnd = sub?.currentPeriodEnd
     ? new Date(sub.currentPeriodEnd).toLocaleDateString('en-US', {
-        year: 'numeric', month: 'long', day: 'numeric',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
       })
     : null
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safe} edges={['top']}>
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-          <View style={styles.header}>
+    <View className="flex-1 bg-background">
+      <SafeAreaView className="flex-1" edges={['top']}>
+        <ScrollView
+          contentContainerClassName="p-6 gap-4 pb-10"
+          showsVerticalScrollIndicator={false}
+        >
+          <View className="flex-row items-center justify-between mb-1">
             <Pressable onPress={() => router.back()} hitSlop={12}>
-              <ThemedText type="default" themeColor="textSecondary">← Back</ThemedText>
+              <Text variant="small" muted>Back</Text>
             </Pressable>
-            <ThemedText type="subtitle">Subscription</ThemedText>
+            <Text variant="subtitle">Subscription</Text>
             <View style={{ width: 48 }} />
           </View>
 
           {isLoading ? (
-            <View style={styles.skeletons}>
-              {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
+            <View className="gap-3">
+              {[1, 2].map((i) => <SkeletonCard key={i} />)}
             </View>
           ) : sub ? (
             <>
-              <ThemedView type="backgroundElement" style={styles.summaryCard}>
-                <View style={styles.summaryRow}>
-                  <ThemedText type="default" style={styles.summaryLabel}>Plan</ThemedText>
-                  <ThemedText type="default" style={styles.summaryValue}>
-                    {PLAN_DETAILS[sub.plan].label}
-                  </ThemedText>
+              <View className="bg-card rounded-2xl p-4 gap-2.5">
+                <View className="flex-row justify-between">
+                  <Text muted>Plan</Text>
+                  <Text className="font-semibold text-foreground">{PLAN_DETAILS[sub.plan].label}</Text>
                 </View>
-                <View style={styles.summaryRow}>
-                  <ThemedText type="default" style={styles.summaryLabel}>Status</ThemedText>
-                  <ThemedText
-                    type="default"
-                    style={[styles.summaryValue, { color: sub.status === 'ACTIVE' ? '#22c55e' : '#f59e0b' }]}
-                  >
+                <View className="flex-row justify-between">
+                  <Text muted>Status</Text>
+                  <Text className={`font-semibold ${sub.status === 'ACTIVE' ? 'text-success' : 'text-warning'}`}>
                     {sub.status}
-                  </ThemedText>
+                  </Text>
                 </View>
-                <View style={styles.summaryRow}>
-                  <ThemedText type="default" style={styles.summaryLabel}>Clients</ThemedText>
-                  <ThemedText type="default" style={styles.summaryValue}>
-                    {sub.currentClientCount} / {sub.clientLimit}
-                  </ThemedText>
+                <View className="flex-row justify-between">
+                  <Text muted>Clients</Text>
+                  <Text className="font-semibold text-foreground">
+                    {sub.currentClientCount} / {limitLabel(sub.clientLimit)}
+                  </Text>
+                </View>
+                <View className="flex-row justify-between">
+                  <Text muted>Templates</Text>
+                  <Text className="font-semibold text-foreground">
+                    {sub.currentTemplateCount} / {limitLabel(sub.templateLimit)}
+                  </Text>
                 </View>
                 {periodEnd ? (
-                  <View style={styles.summaryRow}>
-                    <ThemedText type="default" style={styles.summaryLabel}>Renews</ThemedText>
-                    <ThemedText type="default" style={styles.summaryValue}>{periodEnd}</ThemedText>
+                  <View className="flex-row justify-between">
+                    <Text muted>Renews</Text>
+                    <Text className="font-semibold text-foreground">{periodEnd}</Text>
                   </View>
                 ) : null}
-              </ThemedView>
+              </View>
 
-              <ThemedText type="default" style={styles.plansTitle}>Available plans</ThemedText>
-              {(['FREE', 'BASIC', 'PRO'] as SubscriptionPlan[]).map((plan) => (
+              <Text className="font-semibold text-base text-foreground">Available plans</Text>
+              {(['FREE', 'PRO'] as SubscriptionPlan[]).map((plan) => (
                 <PlanCard
                   key={plan}
                   plan={plan}
                   current={sub.plan === plan}
-                  onUpgrade={() => handleUpgrade(plan)}
+                  onUpgrade={handleUpgrade}
                   loading={gettingUrl}
                 />
               ))}
@@ -133,32 +137,7 @@ export default function SubscriptionScreen() {
           ) : null}
         </ScrollView>
       </SafeAreaView>
-    </ThemedView>
+    </View>
   )
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  safe: { flex: 1 },
-  scroll: { padding: Spacing.four, gap: Spacing.three, paddingBottom: 40 },
-  header: {
-    flexDirection: 'row', alignItems: 'center',
-    justifyContent: 'space-between', marginBottom: 4,
-  },
-  skeletons: { gap: 12 },
-  summaryCard: { borderRadius: 16, padding: 16, gap: 10 },
-  summaryRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  summaryLabel: { color: '#6b7280' },
-  summaryValue: { fontWeight: '600' },
-  plansTitle: { fontWeight: '600', fontSize: 16 },
-  planCard: { borderRadius: 16, padding: 16, gap: 6 },
-  planCardActive: { borderWidth: 2, borderColor: '#3c87f7' },
-  currentBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#3c87f710',
-    borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, marginBottom: 4,
-  },
-  currentBadgeText: { color: '#3c87f7', fontSize: 12, fontWeight: '600' },
-  planName: { fontWeight: '700', fontSize: 18 },
-  upgradeBtn: { marginTop: 8 },
-})

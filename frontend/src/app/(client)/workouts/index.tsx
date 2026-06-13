@@ -1,20 +1,25 @@
 import { useState } from 'react'
 import { useRouter } from 'expo-router'
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native'
+import { Pressable, ScrollView, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { ThemedText } from '@/components/themed-text'
-import { ThemedView } from '@/components/themed-view'
+import { Text } from '@/components/ui/text'
+import { SkeletonCard } from '@/components/ui/skeleton'
+import { EmptyState } from '@/components/ui/empty-state'
 import { useWorkoutLogs } from '@/features/workouts/hooks/use-workout-logs'
 import type { WorkoutLog, WorkoutStatus } from '@/features/workouts/types'
-import { Spacing } from '@/constants/theme'
-import { EmptyState } from '@/shared/components/empty-state'
-import { SkeletonCard } from '@/shared/components/skeleton'
 
 const STATUS_COLOR: Record<string, string> = {
-  COMPLETED: '#22c55e',
-  IN_PROGRESS: '#f59e0b',
-  PENDING: '#3c87f7',
-  SKIPPED: '#6b7280',
+  COMPLETED: 'text-success',
+  IN_PROGRESS: 'text-warning',
+  PENDING: 'text-primary',
+  SKIPPED: 'text-muted-foreground',
+}
+
+const STATUS_DOT_COLOR: Record<string, string> = {
+  COMPLETED: 'bg-success',
+  IN_PROGRESS: 'bg-warning',
+  PENDING: 'bg-primary',
+  SKIPPED: 'bg-muted-foreground',
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -32,25 +37,26 @@ const FILTERS: { label: string; value: WorkoutStatus | undefined }[] = [
 ]
 
 function WorkoutRow({ log, onPress }: { log: WorkoutLog; onPress: () => void }) {
-  const color = STATUS_COLOR[log.status] ?? '#3c87f7'
+  const statusColor = STATUS_COLOR[log.status] ?? 'text-primary'
+  const dotColor = STATUS_DOT_COLOR[log.status] ?? 'bg-primary'
   const done = log.exercises.filter((e) => e.completedSets >= e.sets).length
   const total = log.exercises.length
   const date = log.dueDate ? new Date(log.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : null
 
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [pressed && { opacity: 0.75 }]}>
-      <ThemedView type="backgroundElement" style={styles.row}>
-        <View style={[styles.statusDot, { backgroundColor: color }]} />
-        <View style={styles.rowBody}>
-          <ThemedText type="default" style={styles.rowTitle} numberOfLines={1}>{log.templateName}</ThemedText>
-          <ThemedText type="small" themeColor="textSecondary">
-            Day {log.dayNumber} — {log.dayName}
+    <Pressable onPress={onPress} className="active:opacity-75">
+      <View className="bg-card rounded-xl p-3.5 flex-row items-center gap-3">
+        <View className={`w-2.5 h-2.5 rounded-full ${dotColor}`} />
+        <View className="flex-1 gap-0.5">
+          <Text className="font-semibold text-foreground" numberOfLines={1}>{log.templateName}</Text>
+          <Text variant="small" muted>
+            Day {log.dayNumber} - {log.dayName}
             {total > 0 ? ` · ${done}/${total} ex` : ''}
             {date ? ` · ${date}` : ''}
-          </ThemedText>
+          </Text>
         </View>
-        <ThemedText type="small" style={[styles.statusLabel, { color }]}>{STATUS_LABEL[log.status]}</ThemedText>
-      </ThemedView>
+        <Text className={`text-xs font-semibold ${statusColor}`}>{STATUS_LABEL[log.status]}</Text>
+      </View>
     </Pressable>
   )
 }
@@ -61,38 +67,41 @@ export default function WorkoutsScreen() {
   const { data: workouts, isLoading } = useWorkoutLogs(filter ? { status: filter } : undefined)
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safe} edges={['top']}>
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-          <ThemedText type="subtitle">Workouts</ThemedText>
+    <View className="flex-1 bg-background">
+      <SafeAreaView className="flex-1" edges={['top']}>
+        <ScrollView
+          contentContainerClassName="p-6 gap-4 pb-10"
+          showsVerticalScrollIndicator={false}
+        >
+          <Text variant="subtitle">Workouts</Text>
 
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.filterRow}
+            contentContainerClassName="gap-2 py-0.5"
           >
             {FILTERS.map((f) => (
               <Pressable
                 key={f.label}
                 onPress={() => setFilter(f.value)}
-                style={[styles.filterChip, filter === f.value && styles.filterChipActive]}
+                className={`px-4 py-1.5 rounded-full ${filter === f.value ? 'bg-primary' : 'bg-border'}`}
               >
-                <ThemedText
-                  type="small"
-                  style={[styles.filterLabel, filter === f.value && styles.filterLabelActive]}
+                <Text
+                  variant="small"
+                  className={filter === f.value ? 'text-white font-semibold' : 'text-foreground'}
                 >
                   {f.label}
-                </ThemedText>
+                </Text>
               </Pressable>
             ))}
           </ScrollView>
 
           {isLoading ? (
-            <View style={styles.skeletons}>
-              {[1, 2, 3, 4].map((i) => <SkeletonCard key={i} style={styles.skRow} />)}
+            <View className="gap-2.5">
+              {[1, 2, 3, 4].map((i) => <SkeletonCard key={i} className="rounded-xl h-16" />)}
             </View>
           ) : workouts && workouts.length > 0 ? (
-            <View style={styles.list}>
+            <View className="gap-2.5">
               {workouts.map((log) => (
                 <WorkoutRow
                   key={log.id}
@@ -105,37 +114,11 @@ export default function WorkoutsScreen() {
             <EmptyState
               title="No workouts yet"
               subtitle="Your trainer will assign workouts that appear here."
-              style={styles.empty}
+              className="mt-4"
             />
           )}
         </ScrollView>
       </SafeAreaView>
-    </ThemedView>
+    </View>
   )
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  safe: { flex: 1 },
-  scroll: { padding: Spacing.four, gap: Spacing.three, paddingBottom: 40 },
-  filterRow: { gap: 8, paddingVertical: 2 },
-  filterChip: {
-    paddingHorizontal: 16, paddingVertical: 7,
-    borderRadius: 20, backgroundColor: '#e5e7eb',
-  },
-  filterChipActive: { backgroundColor: '#3c87f7' },
-  filterLabel: { color: '#374151' },
-  filterLabelActive: { color: '#fff', fontWeight: '600' },
-  skeletons: { gap: 10 },
-  skRow: { borderRadius: 14, height: 64 },
-  list: { gap: 10 },
-  empty: { marginTop: Spacing.four },
-  row: {
-    flexDirection: 'row', alignItems: 'center',
-    borderRadius: 14, padding: 14, gap: 12,
-  },
-  statusDot: { width: 10, height: 10, borderRadius: 5 },
-  rowBody: { flex: 1, gap: 2 },
-  rowTitle: { fontWeight: '600' },
-  statusLabel: { fontWeight: '600', fontSize: 12 },
-})

@@ -8,9 +8,10 @@ export function useConfirmUpload() {
 
   return useMutation({
     mutationFn: (payload: ConfirmUploadPayload) =>
-      apiClient.post<Photo>('/photos/confirm', payload).then((r) => r.data),
+      apiClient.post<Photo>(`/uploads/${payload.photoId}/confirm`).then((r) => r.data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: photoKeys.mine() })
     },
   })
 }
+

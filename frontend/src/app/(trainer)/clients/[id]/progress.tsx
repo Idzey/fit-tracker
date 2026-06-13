@@ -1,24 +1,30 @@
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native'
+import { Pressable, ScrollView, View } from 'react-native'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { ThemedText } from '@/components/themed-text'
-import { ThemedView } from '@/components/themed-view'
+import { Text } from '@/components/ui/text'
+import { Skeleton, SkeletonCard } from '@/components/ui/skeleton'
+import { EmptyState } from '@/components/ui/empty-state'
 import { useClientWorkoutLogs } from '@/features/clients/hooks/use-client-workout-logs'
 import { useClientProgress } from '@/features/clients/hooks/use-client-progress'
 import type { WorkoutLog } from '@/features/workouts/types'
-import { Spacing } from '@/constants/theme'
-import { EmptyState } from '@/shared/components/empty-state'
-import { Skeleton, SkeletonCard } from '@/shared/components/skeleton'
 
 const STATUS_COLOR: Record<string, string> = {
-  COMPLETED: '#22c55e',
-  IN_PROGRESS: '#f59e0b',
-  PENDING: '#3c87f7',
-  SKIPPED: '#6b7280',
+  COMPLETED: 'text-success',
+  IN_PROGRESS: 'text-warning',
+  PENDING: 'text-primary',
+  SKIPPED: 'text-muted-foreground',
+}
+
+const STATUS_DOT_COLOR: Record<string, string> = {
+  COMPLETED: 'bg-success',
+  IN_PROGRESS: 'bg-warning',
+  PENDING: 'bg-primary',
+  SKIPPED: 'bg-muted-foreground',
 }
 
 function WorkoutRow({ log }: { log: WorkoutLog }) {
-  const color = STATUS_COLOR[log.status] ?? '#3c87f7'
+  const statusColor = STATUS_COLOR[log.status] ?? 'text-primary'
+  const dotColor = STATUS_DOT_COLOR[log.status] ?? 'bg-primary'
   const date = log.completedAt
     ? new Date(log.completedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
     : log.dueDate
@@ -28,18 +34,18 @@ function WorkoutRow({ log }: { log: WorkoutLog }) {
   const total = log.exercises.length
 
   return (
-    <ThemedView type="backgroundElement" style={styles.row}>
-      <View style={[styles.statusDot, { backgroundColor: color }]} />
-      <View style={styles.rowBody}>
-        <ThemedText type="default" style={styles.rowTitle} numberOfLines={1}>{log.templateName}</ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">
-          Day {log.dayNumber} — {log.dayName}
+    <View className="bg-card rounded-xl p-3.5 flex-row items-center gap-3">
+      <View className={`w-2.5 h-2.5 rounded-full ${dotColor}`} />
+      <View className="flex-1 gap-0.5">
+        <Text className="font-semibold text-foreground" numberOfLines={1}>{log.templateName}</Text>
+        <Text variant="small" muted>
+          Day {log.dayNumber} - {log.dayName}
           {total > 0 ? ` · ${done}/${total} ex` : ''}
           {date ? ` · ${date}` : ''}
-        </ThemedText>
+        </Text>
       </View>
-      <ThemedText type="small" style={[styles.statusLabel, { color }]}>{log.status}</ThemedText>
-    </ThemedView>
+      <Text className={`text-[11px] font-semibold ${statusColor}`}>{log.status}</Text>
+    </View>
   )
 }
 
@@ -52,101 +58,76 @@ export default function ClientProgressScreen() {
   const isLoading = loadingLogs || loadingSummary
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safe} edges={['top']}>
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-          <View style={styles.header}>
+    <View className="flex-1 bg-background">
+      <SafeAreaView className="flex-1" edges={['top']}>
+        <ScrollView
+          contentContainerClassName="p-6 gap-4 pb-10"
+          showsVerticalScrollIndicator={false}
+        >
+          <View className="flex-row items-center justify-between mb-1">
             <Pressable onPress={() => router.back()} hitSlop={12}>
-              <ThemedText type="default" themeColor="textSecondary">← Back</ThemedText>
+              <Text variant="small" muted>← Back</Text>
             </Pressable>
-            <ThemedText type="subtitle">Client Progress</ThemedText>
+            <Text variant="subtitle">Client Progress</Text>
             <View style={{ width: 48 }} />
           </View>
 
           {isLoading ? (
             <>
-              <View style={styles.statsGrid}>
+              <View className="flex-row flex-wrap gap-3">
                 {[1, 2, 3, 4].map((i) => (
-                  <View key={i} style={styles.statCard}>
-                    <Skeleton style={{ height: 28, width: 50, borderRadius: 6, marginBottom: 6 }} />
-                    <Skeleton style={{ height: 14, width: 70, borderRadius: 6 }} />
+                  <View key={i} className="bg-card rounded-2xl p-3.5 gap-1 flex-1 min-w-[44%]">
+                    <Skeleton className="h-7 w-12 mb-1.5" />
+                    <Skeleton className="h-3.5 w-16" />
                   </View>
                 ))}
               </View>
-              <View style={styles.logList}>
-                {[1, 2, 3].map((i) => <SkeletonCard key={i} style={styles.skRow} />)}
+              <View className="gap-2.5">
+                {[1, 2, 3].map((i) => <SkeletonCard key={i} className="rounded-xl h-16" />)}
               </View>
             </>
           ) : (
             <>
               {summary ? (
-                <View style={styles.statsGrid}>
-                  <ThemedView type="backgroundElement" style={styles.statCard}>
-                    <ThemedText style={styles.statVal}>{summary.totalWorkouts}</ThemedText>
-                    <ThemedText type="small" themeColor="textSecondary">Total</ThemedText>
-                  </ThemedView>
-                  <ThemedView type="backgroundElement" style={styles.statCard}>
-                    <ThemedText style={styles.statVal}>{summary.workoutsThisWeek}</ThemedText>
-                    <ThemedText type="small" themeColor="textSecondary">This week</ThemedText>
-                  </ThemedView>
-                  <ThemedView type="backgroundElement" style={styles.statCard}>
-                    <ThemedText style={[styles.statVal, { color: '#f59e0b' }]}>{summary.streak}</ThemedText>
-                    <ThemedText type="small" themeColor="textSecondary">Streak</ThemedText>
-                  </ThemedView>
-                  <ThemedView type="backgroundElement" style={styles.statCard}>
-                    <ThemedText style={[styles.statVal, { color: '#22c55e' }]}>
+                <View className="flex-row flex-wrap gap-3">
+                  <View className="bg-card rounded-2xl p-3.5 gap-1 flex-1 min-w-[44%]">
+                    <Text className="text-[26px] font-bold text-foreground">{summary.totalWorkouts}</Text>
+                    <Text variant="small" muted>Total</Text>
+                  </View>
+                  <View className="bg-card rounded-2xl p-3.5 gap-1 flex-1 min-w-[44%]">
+                    <Text className="text-[26px] font-bold text-foreground">{summary.workoutsThisWeek}</Text>
+                    <Text variant="small" muted>This week</Text>
+                  </View>
+                  <View className="bg-card rounded-2xl p-3.5 gap-1 flex-1 min-w-[44%]">
+                    <Text className="text-[26px] font-bold text-warning">{summary.streak}</Text>
+                    <Text variant="small" muted>Streak</Text>
+                  </View>
+                  <View className="bg-card rounded-2xl p-3.5 gap-1 flex-1 min-w-[44%]">
+                    <Text className="text-[26px] font-bold text-success">
                       {Math.round(summary.completionRate * 100)}%
-                    </ThemedText>
-                    <ThemedText type="small" themeColor="textSecondary">Completion</ThemedText>
-                  </ThemedView>
+                    </Text>
+                    <Text variant="small" muted>Completion</Text>
+                  </View>
                 </View>
               ) : null}
 
-              <ThemedText type="default" style={styles.sectionTitle}>Workout history</ThemedText>
+              <Text className="font-semibold text-base text-foreground">Workout history</Text>
 
               {logs && logs.length > 0 ? (
-                <View style={styles.logList}>
+                <View className="gap-2.5">
                   {logs.map((log) => <WorkoutRow key={log.id} log={log} />)}
                 </View>
               ) : (
                 <EmptyState
                   title="No workouts yet"
                   subtitle="The client hasn't started any workouts."
-                  style={styles.empty}
+                  className="mt-5"
                 />
               )}
             </>
           )}
         </ScrollView>
       </SafeAreaView>
-    </ThemedView>
+    </View>
   )
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  safe: { flex: 1 },
-  scroll: { padding: Spacing.four, gap: Spacing.three, paddingBottom: 40 },
-  header: {
-    flexDirection: 'row', alignItems: 'center',
-    justifyContent: 'space-between', marginBottom: 4,
-  },
-  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  statCard: {
-    flex: 1, minWidth: '44%',
-    borderRadius: 16, padding: 14, gap: 4,
-  },
-  statVal: { fontSize: 26, fontWeight: '700' },
-  sectionTitle: { fontWeight: '600', fontSize: 16 },
-  logList: { gap: 10 },
-  skRow: { borderRadius: 14, height: 64 },
-  row: {
-    flexDirection: 'row', alignItems: 'center',
-    borderRadius: 14, padding: 14, gap: 12,
-  },
-  statusDot: { width: 10, height: 10, borderRadius: 5 },
-  rowBody: { flex: 1, gap: 2 },
-  rowTitle: { fontWeight: '600' },
-  statusLabel: { fontWeight: '600', fontSize: 11 },
-  empty: { marginTop: 20 },
-})

@@ -1,20 +1,18 @@
-import { Alert, Dimensions, FlatList, Pressable, StyleSheet, View } from 'react-native'
+import { Alert, Dimensions, FlatList, Pressable, View } from 'react-native'
 import { Image } from 'expo-image'
 import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { ThemedText } from '@/components/themed-text'
-import { ThemedView } from '@/components/themed-view'
+import { Text } from '@/components/ui/text'
+import { Skeleton } from '@/components/ui/skeleton'
+import { EmptyState } from '@/components/ui/empty-state'
 import { useMyPhotos } from '@/features/photos/hooks/use-my-photos'
 import { useDeletePhoto } from '@/features/photos/hooks/use-delete-photo'
 import type { Photo } from '@/features/photos/types'
-import { Spacing } from '@/constants/theme'
-import { EmptyState } from '@/shared/components/empty-state'
-import { Skeleton } from '@/shared/components/skeleton'
 
 const COLS = 3
 const GAP = 3
 const SCREEN_W = Dimensions.get('window').width
-const TILE = (SCREEN_W - Spacing.four * 2 - GAP * (COLS - 1)) / COLS
+const TILE = (SCREEN_W - 48 - GAP * (COLS - 1)) / COLS
 
 function PhotoTile({ photo, onDelete }: { photo: Photo; onDelete: () => void }) {
   return (
@@ -28,7 +26,7 @@ function PhotoTile({ photo, onDelete }: { photo: Photo; onDelete: () => void }) 
     >
       <Image
         source={{ uri: photo.thumbnailUrl ?? photo.url }}
-        style={styles.tile}
+        style={{ width: TILE, height: TILE, borderRadius: 6 }}
         contentFit="cover"
         transition={200}
       />
@@ -42,22 +40,22 @@ export default function PhotosScreen() {
   const { mutate: deletePhoto } = useDeletePhoto()
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safe} edges={['top']}>
-        <View style={styles.header}>
-          <ThemedText type="subtitle">Photos</ThemedText>
+    <View className="flex-1 bg-background">
+      <SafeAreaView className="flex-1" edges={['top']}>
+        <View className="flex-row justify-between items-center px-6 pt-6 pb-3">
+          <Text variant="subtitle">Photos</Text>
           <Pressable
             onPress={() => router.push('/(client)/photos/upload')}
-            style={styles.uploadBtn}
+            className="bg-primary rounded-xl px-3.5 py-2 active:opacity-75"
           >
-            <ThemedText type="small" style={styles.uploadBtnText}>+ Upload</ThemedText>
+            <Text variant="small" className="text-white font-semibold">+ Upload</Text>
           </Pressable>
         </View>
 
         {isLoading ? (
-          <View style={styles.grid}>
+          <View className="flex-row flex-wrap px-6 gap-[3px]">
             {Array.from({ length: 9 }).map((_, i) => (
-              <Skeleton key={i} style={styles.tile} />
+              <Skeleton key={i} style={{ width: TILE, height: TILE, borderRadius: 6 }} />
             ))}
           </View>
         ) : photos && photos.length > 0 ? (
@@ -65,8 +63,8 @@ export default function PhotosScreen() {
             data={photos}
             keyExtractor={(p) => p.id}
             numColumns={COLS}
-            columnWrapperStyle={styles.row}
-            contentContainerStyle={styles.listContent}
+            columnWrapperStyle={{ gap: GAP, marginBottom: GAP }}
+            contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 40 }}
             renderItem={({ item }) => (
               <PhotoTile photo={item} onDelete={() => deletePhoto(item.id)} />
             )}
@@ -77,32 +75,10 @@ export default function PhotosScreen() {
             subtitle="Track your transformation by uploading progress photos."
             action="Upload first photo"
             onAction={() => router.push('/(client)/photos/upload')}
-            style={styles.empty}
+            className="m-6"
           />
         )}
       </SafeAreaView>
-    </ThemedView>
+    </View>
   )
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  safe: { flex: 1 },
-  header: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: Spacing.four, paddingTop: Spacing.four, paddingBottom: Spacing.two,
-  },
-  uploadBtn: {
-    backgroundColor: '#3c87f7', borderRadius: 12,
-    paddingHorizontal: 14, paddingVertical: 8,
-  },
-  uploadBtnText: { color: '#fff', fontWeight: '600' },
-  grid: {
-    flexDirection: 'row', flexWrap: 'wrap',
-    paddingHorizontal: Spacing.four, gap: GAP,
-  },
-  listContent: { paddingHorizontal: Spacing.four, paddingBottom: 40 },
-  row: { gap: GAP, marginBottom: GAP },
-  tile: { width: TILE, height: TILE, borderRadius: 6 },
-  empty: { margin: Spacing.four },
-})

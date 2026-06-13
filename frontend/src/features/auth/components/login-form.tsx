@@ -1,8 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Controller, useForm } from 'react-hook-form'
-import { Alert, StyleSheet, View } from 'react-native'
-import { Button } from '@/shared/components/button'
-import { Input } from '@/shared/components/input'
+import { Alert, View } from 'react-native'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { useLogin } from '../hooks/use-login'
 import { loginSchema, type LoginData } from '../schemas'
 
@@ -22,7 +22,7 @@ export function LoginForm() {
   }
 
   return (
-    <View style={styles.form}>
+    <View className="gap-4">
       <Controller
         control={control}
         name="email"
@@ -46,7 +46,7 @@ export function LoginForm() {
         render={({ field }) => (
           <Input
             label="Password"
-            placeholder="••••••••"
+            placeholder="Password"
             secureTextEntry
             autoComplete="current-password"
             error={errors.password?.message}
@@ -56,12 +56,7 @@ export function LoginForm() {
           />
         )}
       />
-      <Button label="Sign in" loading={isPending} onPress={handleSubmit(onSubmit)} style={styles.submit} />
+      <Button label="Sign in" loading={isPending} onPress={handleSubmit(onSubmit)} className="mt-2" />
     </View>
   )
 }
-
-const styles = StyleSheet.create({
-  form: { gap: 16 },
-  submit: { marginTop: 8 },
-})

@@ -1,17 +1,14 @@
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native'
+import { Pressable, ScrollView, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { ThemedText } from '@/components/themed-text'
-import { ThemedView } from '@/components/themed-view'
-import { useAuthStore } from '@/store/auth.store'
+import { Text } from '@/components/ui/text'
+import { Avatar } from '@/components/ui/avatar'
+import { SkeletonCard } from '@/components/ui/skeleton'
 import { useClients } from '@/features/clients/hooks/use-clients'
 import { useNotifications } from '@/features/notifications/hooks/use-notifications'
-import { Spacing } from '@/constants/theme'
-import { SkeletonCard } from '@/shared/components/skeleton'
 
 export default function TrainerDashboard() {
   const router = useRouter()
-  const { user } = useAuthStore()
   const { data: clientsData, isLoading: loadingClients } = useClients()
   const { data: notifData } = useNotifications()
 
@@ -24,129 +21,87 @@ export default function TrainerDashboard() {
   })()
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safe} edges={['top']}>
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-          <View style={styles.headerRow}>
+    <View className="flex-1 bg-background">
+      <SafeAreaView className="flex-1" edges={['top']}>
+        <ScrollView
+          contentContainerClassName="p-6 gap-4 pb-10"
+          showsVerticalScrollIndicator={false}
+        >
+          <View className="flex-row justify-between items-start">
             <View>
-              <ThemedText type="subtitle">{greeting}</ThemedText>
-              <ThemedText type="small" themeColor="textSecondary">Trainer dashboard</ThemedText>
+              <Text variant="subtitle">{greeting}</Text>
+              <Text variant="small" muted>Trainer dashboard</Text>
             </View>
             <Pressable
               onPress={() => router.push('/(trainer)/notifications')}
-              style={styles.bellBtn}
+              className="p-2 relative"
             >
-              <ThemedText style={styles.bellIcon}>🔔</ThemedText>
+              <Text className="text-2xl">N</Text>
               {unread > 0 ? (
-                <View style={styles.badge}>
-                  <ThemedText style={styles.badgeText}>{unread > 9 ? '9+' : unread}</ThemedText>
+                <View className="absolute top-1 right-1 bg-destructive rounded-full min-w-[18px] h-[18px] items-center justify-center px-0.5">
+                  <Text className="text-white text-[10px] font-bold">{unread > 9 ? '9+' : unread}</Text>
                 </View>
               ) : null}
             </Pressable>
           </View>
 
-          {/* Quick actions */}
-          <View style={styles.quickRow}>
+          <View className="flex-row gap-3">
             <Pressable
-              style={styles.quickCard}
+              className="flex-1 active:opacity-75"
               onPress={() => router.push('/(trainer)/clients/new')}
             >
-              <ThemedView type="backgroundElement" style={styles.quickInner}>
-                <ThemedText style={styles.quickIcon}>➕</ThemedText>
-                <ThemedText type="small" style={styles.quickLabel}>New client</ThemedText>
-              </ThemedView>
+              <View className="bg-card rounded-2xl p-4 gap-2 items-center">
+                <Text className="text-3xl">+</Text>
+                <Text variant="small" className="font-semibold text-center text-foreground">New client</Text>
+              </View>
             </Pressable>
             <Pressable
-              style={styles.quickCard}
+              className="flex-1 active:opacity-75"
               onPress={() => router.push('/(trainer)/templates/new')}
             >
-              <ThemedView type="backgroundElement" style={styles.quickInner}>
-                <ThemedText style={styles.quickIcon}>📋</ThemedText>
-                <ThemedText type="small" style={styles.quickLabel}>New template</ThemedText>
-              </ThemedView>
+              <View className="bg-card rounded-2xl p-4 gap-2 items-center">
+                <Text className="text-3xl">T</Text>
+                <Text variant="small" className="font-semibold text-center text-foreground">New template</Text>
+              </View>
             </Pressable>
           </View>
 
-          {/* Recent clients */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <ThemedText type="default" style={styles.sectionTitle}>Clients</ThemedText>
+          <View className="gap-3">
+            <View className="flex-row justify-between items-center">
+              <Text className="font-semibold text-base text-foreground">Clients</Text>
               <Pressable onPress={() => router.push('/(trainer)/clients')} hitSlop={8}>
-                <ThemedText type="small" style={styles.seeAll}>See all</ThemedText>
+                <Text variant="small" className="text-primary font-semibold">See all</Text>
               </Pressable>
             </View>
 
             {loadingClients ? (
-              <View style={styles.skeletons}>
-                {[1, 2, 3].map((i) => <SkeletonCard key={i} style={styles.skCard} />)}
+              <View className="gap-2.5">
+                {[1, 2, 3].map((i) => <SkeletonCard key={i} className="rounded-xl h-16" />)}
               </View>
             ) : clientsData?.data && clientsData.data.length > 0 ? (
               clientsData.data.slice(0, 5).map((client) => (
                 <Pressable
                   key={client.id}
                   onPress={() => router.push(`/(trainer)/clients/${client.id}`)}
+                  className="active:opacity-75"
                 >
-                  <ThemedView type="backgroundElement" style={styles.clientRow}>
-                    <View style={styles.clientAvatar}>
-                      <ThemedText style={styles.clientAvatarText}>
-                        {client.name.charAt(0).toUpperCase()}
-                      </ThemedText>
+                  <View className="bg-card rounded-xl p-3 flex-row items-center gap-3">
+                    <Avatar name={client.name} size="md" />
+                    <View className="flex-1 gap-0.5">
+                      <Text className="font-semibold text-foreground">{client.name}</Text>
+                      <Text variant="small" muted>{client.activeProgram ?? 'No active program'}</Text>
                     </View>
-                    <View style={styles.clientInfo}>
-                      <ThemedText type="default" style={styles.clientName}>{client.name}</ThemedText>
-                      <ThemedText type="small" themeColor="textSecondary">{client.email}</ThemedText>
-                    </View>
-                    <ThemedText themeColor="textSecondary">›</ThemedText>
-                  </ThemedView>
+                    <Text muted className="text-lg">{'>'}</Text>
+                  </View>
                 </Pressable>
               ))
             ) : (
-              <ThemedText type="small" themeColor="textSecondary">
-                No clients yet — add your first one!
-              </ThemedText>
+              <Text variant="small" muted>No clients yet - add your first one.</Text>
             )}
           </View>
         </ScrollView>
       </SafeAreaView>
-    </ThemedView>
+    </View>
   )
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  safe: { flex: 1 },
-  scroll: { padding: Spacing.four, gap: Spacing.three, paddingBottom: 40 },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  bellBtn: { padding: 8, position: 'relative' },
-  bellIcon: { fontSize: 24 },
-  badge: {
-    position: 'absolute', top: 4, right: 4,
-    backgroundColor: '#ef4444', borderRadius: 10,
-    minWidth: 18, height: 18,
-    alignItems: 'center', justifyContent: 'center',
-    paddingHorizontal: 3,
-  },
-  badgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
-  quickRow: { flexDirection: 'row', gap: 12 },
-  quickCard: { flex: 1 },
-  quickInner: { borderRadius: 16, padding: 16, gap: 8, alignItems: 'center' },
-  quickIcon: { fontSize: 28 },
-  quickLabel: { fontWeight: '600', textAlign: 'center' },
-  section: { gap: 12 },
-  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  sectionTitle: { fontWeight: '600', fontSize: 16 },
-  seeAll: { color: '#3c87f7', fontWeight: '600' },
-  skeletons: { gap: 10 },
-  skCard: { borderRadius: 14, height: 64 },
-  clientRow: {
-    flexDirection: 'row', alignItems: 'center',
-    borderRadius: 14, padding: 12, gap: 12,
-  },
-  clientAvatar: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: '#3c87f7', alignItems: 'center', justifyContent: 'center',
-  },
-  clientAvatarText: { color: '#fff', fontWeight: '700' },
-  clientInfo: { flex: 1, gap: 2 },
-  clientName: { fontWeight: '600' },
-})

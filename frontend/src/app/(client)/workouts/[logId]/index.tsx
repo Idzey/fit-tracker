@@ -1,17 +1,15 @@
 import { useEffect } from 'react'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native'
+import { Alert, Pressable, ScrollView, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { ThemedText } from '@/components/themed-text'
-import { ThemedView } from '@/components/themed-view'
+import { Text } from '@/components/ui/text'
+import { Button } from '@/components/ui/button'
+import { SkeletonCard } from '@/components/ui/skeleton'
 import { useWorkoutLog } from '@/features/workouts/hooks/use-workout-log'
 import { useStartWorkout } from '@/features/workouts/hooks/use-start-workout'
 import { useCompleteWorkout } from '@/features/workouts/hooks/use-complete-workout'
 import { useUpdateExerciseLog } from '@/features/workouts/hooks/use-update-exercise-log'
 import type { WorkoutExerciseLog } from '@/features/workouts/types'
-import { Spacing } from '@/constants/theme'
-import { Button } from '@/shared/components/button'
-import { SkeletonCard } from '@/shared/components/skeleton'
 
 function SetStepper({
   exercise,
@@ -38,58 +36,55 @@ function SetStepper({
   }
 
   return (
-    <ThemedView
-      type="backgroundElement"
-      style={[styles.exerciseCard, allDone && styles.exerciseDone]}
-    >
-      <View style={styles.exHeader}>
-        <ThemedText type="default" style={[styles.exName, allDone && styles.exNameDone]} numberOfLines={2}>
+    <View className={`bg-card rounded-2xl p-4 gap-2 ${allDone ? 'opacity-70' : ''}`}>
+      <View className="flex-row justify-between items-start">
+        <Text
+          className={`flex-1 font-semibold text-base text-foreground ${allDone ? 'line-through' : ''}`}
+          numberOfLines={2}
+        >
           {exercise.name}
-        </ThemedText>
-        {allDone && <ThemedText style={styles.checkmark}>✓</ThemedText>}
+        </Text>
+        {allDone ? <Text className="text-success text-sm font-bold">Done</Text> : null}
       </View>
 
-      <View style={styles.exMeta}>
+      <View className="flex-row flex-wrap">
         {exercise.reps ? (
-          <ThemedText type="small" themeColor="textSecondary">{total} × {exercise.reps} reps</ThemedText>
+          <Text variant="small" muted>{total} x {exercise.reps} reps</Text>
         ) : exercise.duration ? (
-          <ThemedText type="small" themeColor="textSecondary">{total} × {exercise.duration}s</ThemedText>
+          <Text variant="small" muted>{total} x {exercise.duration}s</Text>
         ) : (
-          <ThemedText type="small" themeColor="textSecondary">{total} sets</ThemedText>
+          <Text variant="small" muted>{total} sets</Text>
         )}
-        {exercise.weight ? (
-          <ThemedText type="small" themeColor="textSecondary"> · {exercise.weight} kg</ThemedText>
-        ) : null}
+        {exercise.weight ? <Text variant="small" muted> - {exercise.weight} kg</Text> : null}
       </View>
 
-      <View style={styles.stepper}>
+      <View className="flex-row items-center gap-3">
         <Pressable
           onPress={decrement}
           disabled={disabled || done <= 0}
-          style={[styles.stepBtn, (disabled || done <= 0) && styles.stepBtnDisabled]}
+          className={`w-10 h-10 rounded-xl bg-primary/10 items-center justify-center ${(disabled || done <= 0) ? 'opacity-35' : ''}`}
         >
-          <ThemedText style={styles.stepBtnText}>−</ThemedText>
+          <Text className="text-primary text-2xl leading-6 font-medium">-</Text>
         </Pressable>
-        <View style={styles.setsDisplay}>
+        <View className="flex-1 flex-row gap-1.5 flex-wrap">
           {Array.from({ length: total }).map((_, i) => (
             <View
               key={i}
-              style={[styles.setDot, i < done ? styles.setDotDone : styles.setDotPending]}
+              className={`w-4.5 h-4.5 rounded-full ${i < done ? 'bg-success' : 'bg-border'}`}
+              style={{ width: 18, height: 18 }}
             />
           ))}
         </View>
         <Pressable
           onPress={increment}
           disabled={disabled || allDone}
-          style={[styles.stepBtn, styles.stepBtnAdd, (disabled || allDone) && styles.stepBtnDisabled]}
+          className={`w-10 h-10 rounded-xl bg-primary items-center justify-center ${(disabled || allDone) ? 'opacity-35' : ''}`}
         >
-          <ThemedText style={[styles.stepBtnText, { color: '#fff' }]}>+</ThemedText>
+          <Text className="text-white text-2xl leading-6 font-medium">+</Text>
         </Pressable>
       </View>
-      <ThemedText type="small" themeColor="textSecondary" style={styles.setsLabel}>
-        {done} / {total} sets done
-      </ThemedText>
-    </ThemedView>
+      <Text variant="small" muted className="text-right">{done} / {total} sets done</Text>
+    </View>
   )
 }
 
@@ -104,7 +99,7 @@ export default function WorkoutExecutionScreen() {
     if (log?.status === 'PENDING') {
       start(logId)
     }
-  }, [log?.status])
+  }, [log?.status, logId, start])
 
   const isCompleted = log?.status === 'COMPLETED'
   const allExercisesDone = log?.exercises.every((e) => e.completedSets >= e.sets) ?? false
@@ -112,7 +107,7 @@ export default function WorkoutExecutionScreen() {
   const handleComplete = () => {
     complete(logId, {
       onSuccess: () => {
-        Alert.alert('Workout done! 🎉', 'Great job completing your workout!', [
+        Alert.alert('Workout done!', 'Great job completing your workout!', [
           { text: 'OK', onPress: () => router.replace('/(client)/') },
         ])
       },
@@ -121,28 +116,29 @@ export default function WorkoutExecutionScreen() {
   }
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safe} edges={['top']}>
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-          <View style={styles.headerRow}>
+    <View className="flex-1 bg-background">
+      <SafeAreaView className="flex-1" edges={['top']}>
+        <ScrollView
+          contentContainerClassName="p-6 gap-4 pb-10"
+          showsVerticalScrollIndicator={false}
+        >
+          <View className="mb-1">
             <Pressable onPress={() => router.back()} hitSlop={12}>
-              <ThemedText type="default" themeColor="textSecondary">← Back</ThemedText>
+              <Text variant="small" muted>Back</Text>
             </Pressable>
           </View>
 
           {isLoading ? (
-            <View style={styles.skeletons}>
+            <View className="gap-3">
               {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
             </View>
           ) : log ? (
             <>
-              <View style={styles.titleSection}>
-                <ThemedText type="subtitle">{log.templateName}</ThemedText>
-                <ThemedText type="small" themeColor="textSecondary">
-                  Day {log.dayNumber} — {log.dayName}
-                </ThemedText>
+              <View className="gap-1">
+                <Text variant="subtitle">{log.templateName}</Text>
+                <Text variant="small" muted>Day {log.dayNumber} - {log.dayName}</Text>
                 {isCompleted ? (
-                  <ThemedText type="small" style={styles.completedLabel}>✓ Completed</ThemedText>
+                  <Text variant="small" className="text-success font-semibold">Completed</Text>
                 ) : null}
               </View>
 
@@ -155,49 +151,21 @@ export default function WorkoutExecutionScreen() {
 
               {!isCompleted ? (
                 <Button
-                  label={allExercisesDone ? 'Complete workout' : `${log.exercises.filter(e => e.completedSets >= e.sets).length}/${log.exercises.length} done — finish early?`}
+                  label={
+                    allExercisesDone
+                      ? 'Complete workout'
+                      : `${log.exercises.filter((e) => e.completedSets >= e.sets).length}/${log.exercises.length} done - finish early?`
+                  }
                   loading={completing}
                   onPress={handleComplete}
-                  style={[styles.completeBtn, !allExercisesDone && styles.completeBtnDim]}
+                  className={`mt-2 ${!allExercisesDone ? 'opacity-75' : ''}`}
                 />
               ) : null}
             </>
           ) : null}
         </ScrollView>
       </SafeAreaView>
-    </ThemedView>
+    </View>
   )
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  safe: { flex: 1 },
-  scroll: { padding: Spacing.four, gap: Spacing.three, paddingBottom: 40 },
-  headerRow: { marginBottom: 4 },
-  skeletons: { gap: 12 },
-  titleSection: { gap: 4 },
-  completedLabel: { color: '#22c55e', fontWeight: '600' },
-  exerciseCard: { borderRadius: 16, padding: 16, gap: 8 },
-  exerciseDone: { opacity: 0.7 },
-  exHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  exName: { flex: 1, fontWeight: '600', fontSize: 16 },
-  exNameDone: { textDecorationLine: 'line-through' },
-  checkmark: { color: '#22c55e', fontSize: 18, fontWeight: '700' },
-  exMeta: { flexDirection: 'row', flexWrap: 'wrap' },
-  stepper: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  stepBtn: {
-    width: 40, height: 40, borderRadius: 12,
-    alignItems: 'center', justifyContent: 'center',
-    backgroundColor: '#3c87f720',
-  },
-  stepBtnAdd: { backgroundColor: '#3c87f7' },
-  stepBtnDisabled: { opacity: 0.35 },
-  stepBtnText: { fontSize: 22, lineHeight: 26, fontWeight: '500', color: '#3c87f7' },
-  setsDisplay: { flex: 1, flexDirection: 'row', gap: 6, flexWrap: 'wrap' },
-  setDot: { width: 18, height: 18, borderRadius: 9 },
-  setDotDone: { backgroundColor: '#22c55e' },
-  setDotPending: { backgroundColor: '#d1d5db' },
-  setsLabel: { textAlign: 'right' },
-  completeBtn: { marginTop: 8 },
-  completeBtnDim: { opacity: 0.75 },
-})

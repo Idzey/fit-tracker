@@ -8,7 +8,7 @@ export function useMarkRead() {
 
   return useMutation({
     mutationFn: (notificationId: string) =>
-      apiClient.patch(`/notifications/${notificationId}/read`).then((r) => r.data),
+      apiClient.post(`/notifications/${notificationId}/read`).then((r) => r.data),
     onSuccess: (_data, notificationId) => {
       qc.setQueryData<NotificationListResponse>(notificationKeys.list(), (old) => {
         if (!old) return old
@@ -22,3 +22,4 @@ export function useMarkRead() {
     },
   })
 }
+

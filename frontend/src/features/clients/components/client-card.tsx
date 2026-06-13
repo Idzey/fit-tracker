@@ -1,7 +1,6 @@
-import { Pressable, StyleSheet, View } from 'react-native'
-import { ThemedText } from '@/components/themed-text'
-import { ThemedView } from '@/components/themed-view'
-import { useTheme } from '@/hooks/use-theme'
+import { Pressable, View } from 'react-native'
+import { Text } from '@/components/ui/text'
+import { Avatar } from '@/components/ui/avatar'
 import type { ClientSummary } from '../types'
 
 interface ClientCardProps {
@@ -15,64 +14,29 @@ function formatDate(iso: string | null) {
 }
 
 export function ClientCard({ client, onPress }: ClientCardProps) {
-  const theme = useTheme()
-
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.pressable, pressed && { opacity: 0.7 }]}
+      className="mx-4 mb-2.5 active:opacity-75"
     >
-      <ThemedView type="backgroundElement" style={styles.card}>
-        <View style={styles.avatar}>
-          <ThemedText type="default" style={styles.avatarText}>
-            {client.name.charAt(0).toUpperCase()}
-          </ThemedText>
-        </View>
-        <View style={styles.info}>
-          <ThemedText type="default" style={styles.name}>{client.name}</ThemedText>
+      <View className="bg-card flex-row items-center p-3.5 rounded-2xl gap-3">
+        <Avatar name={client.name} size="md" className="w-11 h-11" />
+        <View className="flex-1 gap-0.5">
+          <Text className="font-semibold text-foreground">{client.name}</Text>
           {client.activeProgram ? (
-            <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
-              {client.activeProgram}
-            </ThemedText>
+            <Text variant="small" muted numberOfLines={1}>{client.activeProgram}</Text>
           ) : (
-            <ThemedText type="small" themeColor="textSecondary">No program</ThemedText>
+            <Text variant="small" muted>No program</Text>
           )}
         </View>
-        <View style={styles.stats}>
-          <ThemedText type="small" style={{ color: '#3c87f7', fontWeight: '600' }}>
-            {client.totalWorkouts}
-          </ThemedText>
-          <ThemedText type="small" themeColor="textSecondary">workouts</ThemedText>
+        <View className="items-end gap-0.5">
+          <Text variant="small" className="text-primary font-semibold">{client.totalWorkouts}</Text>
+          <Text variant="small" muted>workouts</Text>
           {client.lastWorkoutAt ? (
-            <ThemedText type="small" themeColor="textSecondary">
-              {formatDate(client.lastWorkoutAt)}
-            </ThemedText>
+            <Text variant="small" muted>{formatDate(client.lastWorkoutAt)}</Text>
           ) : null}
         </View>
-      </ThemedView>
+      </View>
     </Pressable>
   )
 }
-
-const styles = StyleSheet.create({
-  pressable: { marginHorizontal: 16, marginBottom: 10 },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 14,
-    borderRadius: 16,
-    gap: 12,
-  },
-  avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#3c87f7',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: { color: '#fff', fontWeight: '700', fontSize: 18 },
-  info: { flex: 1, gap: 2 },
-  name: { fontWeight: '600' },
-  stats: { alignItems: 'flex-end', gap: 2 },
-})

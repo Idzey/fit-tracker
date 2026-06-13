@@ -6,7 +6,12 @@ import { workoutKeys } from './query-keys'
 interface WorkoutLogsParams {
   status?: WorkoutStatus
   limit?: number
-  offset?: number
+  page?: number
+}
+
+interface WorkoutLogsResponse {
+  data: WorkoutLog[]
+  pagination: { page: number; limit: number; total: number; hasMore: boolean }
 }
 
 export function useWorkoutLogs(params?: WorkoutLogsParams) {
@@ -14,7 +19,8 @@ export function useWorkoutLogs(params?: WorkoutLogsParams) {
     queryKey: workoutKeys.logs(params),
     queryFn: () =>
       apiClient
-        .get<WorkoutLog[]>('/workouts', { params })
-        .then((r) => r.data),
+        .get<WorkoutLogsResponse>('/progress/workout-logs', { params: { limit: 50, ...params } })
+        .then((r) => r.data.data),
   })
 }
+

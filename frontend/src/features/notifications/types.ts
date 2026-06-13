@@ -1,9 +1,8 @@
 export type NotificationType =
-  | 'WORKOUT_ASSIGNED'
+  | 'WORKOUT_REMINDER'
   | 'WORKOUT_COMPLETED'
-  | 'PROGRAM_ASSIGNED'
+  | 'PHOTO_UPLOADED'
   | 'SUBSCRIPTION_EXPIRING'
-  | 'GENERAL'
 
 export interface AppNotification {
   id: string
@@ -15,7 +14,13 @@ export interface AppNotification {
   createdAt: string
 }
 
+export interface BackendNotificationListResponse {
+  data: AppNotification[]
+  pagination: { page: number; limit: number; total: number; hasMore: boolean }
+}
+
 export interface NotificationListResponse {
   items: AppNotification[]
   unreadCount: number
 }
+

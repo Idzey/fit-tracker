@@ -1,29 +1,25 @@
-import { ScrollView, StyleSheet, View } from 'react-native'
+import { ScrollView, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { ThemedText } from '@/components/themed-text'
-import { ThemedView } from '@/components/themed-view'
+import { Text } from '@/components/ui/text'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useMyProgress } from '@/features/workouts/hooks/use-my-progress'
-import { Spacing } from '@/constants/theme'
-import { Skeleton } from '@/shared/components/skeleton'
 
-function StatCard({ label, value, color }: { label: string; value: string | number; color?: string }) {
+function StatCard({ label, value, className }: { label: string; value: string | number; className?: string }) {
   return (
-    <ThemedView type="backgroundElement" style={styles.statCard}>
-      <ThemedText type="default" style={[styles.statValue, color ? { color } : undefined]}>
+    <View className="bg-card rounded-2xl p-4 gap-1 flex-1 min-w-[44%] items-start">
+      <Text className={`text-[28px] font-bold leading-9 text-foreground ${className ?? ''}`}>
         {value}
-      </ThemedText>
-      <ThemedText type="small" themeColor="textSecondary" style={styles.statLabel}>
-        {label}
-      </ThemedText>
-    </ThemedView>
+      </Text>
+      <Text variant="small" muted>{label}</Text>
+    </View>
   )
 }
 
 function StatCardSkeleton() {
   return (
-    <View style={styles.statCard}>
-      <Skeleton style={{ height: 32, width: 60, borderRadius: 8, marginBottom: 6 }} />
-      <Skeleton style={{ height: 14, width: 80, borderRadius: 6 }} />
+    <View className="bg-card rounded-2xl p-4 gap-1 flex-1 min-w-[44%]">
+      <Skeleton className="h-8 w-14 mb-1.5" />
+      <Skeleton className="h-3.5 w-20" />
     </View>
   )
 }
@@ -34,79 +30,60 @@ export default function ProgressScreen() {
   const completionPct = progress ? Math.round(progress.completionRate * 100) : 0
   const lastWorkout = progress?.lastWorkoutAt
     ? new Date(progress.lastWorkoutAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-    : '—'
+    : '-'
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safe} edges={['top']}>
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-          <ThemedText type="subtitle">Progress</ThemedText>
+    <View className="flex-1 bg-background">
+      <SafeAreaView className="flex-1" edges={['top']}>
+        <ScrollView
+          contentContainerClassName="p-6 gap-4 pb-10"
+          showsVerticalScrollIndicator={false}
+        >
+          <Text variant="subtitle">Progress</Text>
 
           {isLoading ? (
             <>
-              <View style={styles.grid}>
+              <View className="flex-row flex-wrap gap-3">
                 {[1, 2, 3, 4].map((i) => <StatCardSkeleton key={i} />)}
               </View>
-              <Skeleton style={styles.skBar} />
+              <Skeleton className="h-28 rounded-2xl" />
             </>
           ) : progress ? (
             <>
-              <View style={styles.grid}>
+              <View className="flex-row flex-wrap gap-3">
                 <StatCard label="Total workouts" value={progress.totalWorkouts} />
-                <StatCard label="This week" value={progress.workoutsThisWeek} color="#3c87f7" />
+                <StatCard label="This week" value={progress.workoutsThisWeek} className="text-primary" />
                 <StatCard
                   label="Streak"
                   value={`${progress.streak} day${progress.streak !== 1 ? 's' : ''}`}
-                  color="#f59e0b"
+                  className="text-warning"
                 />
                 <StatCard label="Last workout" value={lastWorkout} />
               </View>
 
-              <ThemedView type="backgroundElement" style={styles.completionCard}>
-                <View style={styles.completionHeader}>
-                  <ThemedText type="default" style={styles.completionTitle}>Completion rate</ThemedText>
-                  <ThemedText type="default" style={styles.completionPct}>{completionPct}%</ThemedText>
+              <View className="bg-card rounded-2xl p-4 gap-3">
+                <View className="flex-row justify-between items-center">
+                  <Text className="font-semibold text-base text-foreground">Completion rate</Text>
+                  <Text className="font-bold text-xl text-primary">{completionPct}%</Text>
                 </View>
-                <View style={styles.progressTrack}>
-                  <View style={[styles.progressFill, { width: `${completionPct}%` }]} />
+                <View className="h-3 rounded-full bg-border overflow-hidden">
+                  <View
+                    className="h-full bg-primary rounded-full"
+                    style={{ width: `${completionPct}%` }}
+                  />
                 </View>
-                <ThemedText type="small" themeColor="textSecondary" style={styles.completionSub}>
+                <Text variant="small" muted className="leading-5">
                   {completionPct >= 80
                     ? 'Excellent consistency! Keep it up.'
                     : completionPct >= 50
-                    ? 'Good work — aim for 80% to see best results.'
-                    : 'Stay consistent — every workout counts.'}
-                </ThemedText>
-              </ThemedView>
+                    ? 'Good work - aim for 80% to see best results.'
+                    : 'Stay consistent - every workout counts.'}
+                </Text>
+              </View>
             </>
           ) : null}
         </ScrollView>
       </SafeAreaView>
-    </ThemedView>
+    </View>
   )
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  safe: { flex: 1 },
-  scroll: { padding: Spacing.four, gap: Spacing.three, paddingBottom: 40 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  statCard: {
-    flex: 1, minWidth: '44%',
-    borderRadius: 16, padding: 16, gap: 4,
-    alignItems: 'flex-start',
-  },
-  statValue: { fontSize: 28, fontWeight: '700', lineHeight: 34 },
-  statLabel: { lineHeight: 16 },
-  skBar: { height: 120, borderRadius: 16 },
-  completionCard: { borderRadius: 16, padding: 16, gap: 12 },
-  completionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  completionTitle: { fontWeight: '600', fontSize: 16 },
-  completionPct: { fontWeight: '700', fontSize: 20, color: '#3c87f7' },
-  progressTrack: {
-    height: 12, borderRadius: 6,
-    backgroundColor: '#e5e7eb', overflow: 'hidden',
-  },
-  progressFill: { height: '100%', backgroundColor: '#3c87f7', borderRadius: 6 },
-  completionSub: { lineHeight: 18 },
-})

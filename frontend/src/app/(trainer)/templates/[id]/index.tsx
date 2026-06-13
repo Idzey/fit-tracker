@@ -1,14 +1,12 @@
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native'
+import { Alert, Pressable, ScrollView, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { ThemedText } from '@/components/themed-text'
-import { ThemedView } from '@/components/themed-view'
+import { Text } from '@/components/ui/text'
+import { SkeletonCard } from '@/components/ui/skeleton'
+import { EmptyState } from '@/components/ui/empty-state'
 import { useTemplate } from '@/features/templates/hooks/use-template'
 import { useDeleteTemplate } from '@/features/templates/hooks/use-delete-template'
 import type { Day, Exercise } from '@/features/templates/types'
-import { Spacing } from '@/constants/theme'
-import { SkeletonCard } from '@/shared/components/skeleton'
-import { EmptyState } from '@/shared/components/empty-state'
 
 function ExerciseRow({ ex }: { ex: Exercise }) {
   const meta: string[] = []
@@ -18,25 +16,19 @@ function ExerciseRow({ ex }: { ex: Exercise }) {
   if (ex.weight) meta.push(`${ex.weight} kg`)
 
   return (
-    <View style={exStyles.row}>
-      <ThemedText type="small" style={exStyles.name}>{ex.name}</ThemedText>
-      <ThemedText type="small" themeColor="textSecondary">{meta.join(' · ')}</ThemedText>
+    <View className="flex-row justify-between py-1.5 gap-2">
+      <Text variant="small" className="flex-1 font-medium text-foreground">{ex.name}</Text>
+      <Text variant="small" muted>{meta.join(' · ')}</Text>
     </View>
   )
 }
 
-const exStyles = StyleSheet.create({
-  row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, gap: 8 },
-  name: { flex: 1, fontWeight: '500' },
-})
-
-function DaySection({ day, templateId }: { day: Day; templateId: string }) {
-  const router = useRouter()
+function DaySection({ day }: { day: Day }) {
   return (
-    <ThemedView type="backgroundElement" style={dayStyles.card}>
-      <View style={dayStyles.header}>
-        <ThemedText type="small" style={dayStyles.dayLabel}>Day {day.dayNumber}</ThemedText>
-        <ThemedText type="default" style={dayStyles.dayName}>{day.name}</ThemedText>
+    <View className="bg-card rounded-2xl p-4 gap-1">
+      <View className="mb-2">
+        <Text variant="small" className="text-primary font-semibold mb-0.5">Day {day.dayNumber}</Text>
+        <Text className="font-semibold text-foreground">{day.name}</Text>
       </View>
       {day.exercises.length > 0 ? (
         day.exercises
@@ -44,18 +36,11 @@ function DaySection({ day, templateId }: { day: Day; templateId: string }) {
           .sort((a, b) => a.order - b.order)
           .map((ex) => <ExerciseRow key={ex.id} ex={ex} />)
       ) : (
-        <ThemedText type="small" themeColor="textSecondary">No exercises</ThemedText>
+        <Text variant="small" muted>No exercises</Text>
       )}
-    </ThemedView>
+    </View>
   )
 }
-
-const dayStyles = StyleSheet.create({
-  card: { borderRadius: 16, padding: 16, gap: 4 },
-  header: { marginBottom: 8 },
-  dayLabel: { color: '#3c87f7', fontWeight: '600', marginBottom: 2 },
-  dayName: { fontWeight: '600' },
-})
 
 export default function TemplateDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -76,36 +61,39 @@ export default function TemplateDetailScreen() {
   }
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safe} edges={['top']}>
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-          <View style={styles.headerRow}>
+    <View className="flex-1 bg-background">
+      <SafeAreaView className="flex-1" edges={['top']}>
+        <ScrollView
+          contentContainerClassName="p-6 gap-4 pb-10"
+          showsVerticalScrollIndicator={false}
+        >
+          <View className="mb-1">
             <Pressable onPress={() => router.back()} hitSlop={12}>
-              <ThemedText type="default" themeColor="textSecondary">← Back</ThemedText>
+              <Text variant="small" muted>← Back</Text>
             </Pressable>
           </View>
 
           {isLoading ? (
-            <View style={styles.skeletons}>
+            <View className="gap-3">
               {Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)}
             </View>
           ) : template ? (
             <>
-              <View style={styles.titleSection}>
-                <ThemedText type="subtitle">{template.name}</ThemedText>
+              <View className="gap-1.5">
+                <Text variant="subtitle">{template.name}</Text>
                 {template.description ? (
-                  <ThemedText type="small" themeColor="textSecondary">{template.description}</ThemedText>
+                  <Text variant="small" muted>{template.description}</Text>
                 ) : null}
-                <ThemedText type="small" themeColor="textSecondary">
+                <Text variant="small" muted>
                   {template.daysCount} {template.daysCount === 1 ? 'day' : 'days'}
-                </ThemedText>
+                </Text>
               </View>
 
               {template.days.length > 0 ? (
                 template.days
                   .slice()
                   .sort((a, b) => a.dayNumber - b.dayNumber)
-                  .map((day) => <DaySection key={day.id} day={day} templateId={id} />)
+                  .map((day) => <DaySection key={day.id} day={day} />)
               ) : (
                 <EmptyState
                   title="No days yet"
@@ -116,35 +104,19 @@ export default function TemplateDetailScreen() {
               )}
 
               <Pressable
-                style={styles.addDayBtn}
+                className="border-[1.5px] border-primary border-dashed rounded-xl h-12 items-center justify-center active:opacity-75"
                 onPress={() => router.push(`/(trainer)/templates/${id}/add-day`)}
               >
-                <ThemedText type="small" style={styles.addDayText}>+ Add day</ThemedText>
+                <Text variant="small" className="text-primary font-semibold">+ Add day</Text>
               </Pressable>
 
-              <Pressable onPress={handleDelete} style={styles.deleteBtn}>
-                <ThemedText type="small" style={styles.deleteText}>Delete template</ThemedText>
+              <Pressable onPress={handleDelete} className="self-center py-3 active:opacity-75">
+                <Text variant="small" className="text-destructive">Delete template</Text>
               </Pressable>
             </>
           ) : null}
         </ScrollView>
       </SafeAreaView>
-    </ThemedView>
+    </View>
   )
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  safe: { flex: 1 },
-  scroll: { padding: Spacing.four, gap: Spacing.three, paddingBottom: 40 },
-  headerRow: { marginBottom: 4 },
-  skeletons: { gap: 12 },
-  titleSection: { gap: 6 },
-  addDayBtn: {
-    borderWidth: 1.5, borderColor: '#3c87f7', borderStyle: 'dashed',
-    borderRadius: 14, height: 48, alignItems: 'center', justifyContent: 'center',
-  },
-  addDayText: { color: '#3c87f7', fontWeight: '600' },
-  deleteBtn: { alignSelf: 'center', paddingVertical: 12 },
-  deleteText: { color: '#e53e3e' },
-})

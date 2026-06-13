@@ -1,50 +1,51 @@
 import { useRouter } from 'expo-router'
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native'
+import { Pressable, ScrollView, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { ThemedText } from '@/components/themed-text'
-import { ThemedView } from '@/components/themed-view'
+import { Text } from '@/components/ui/text'
+import { SkeletonCard } from '@/components/ui/skeleton'
+import { EmptyState } from '@/components/ui/empty-state'
 import { useTodayWorkouts } from '@/features/workouts/hooks/use-today-workouts'
-import { Spacing } from '@/constants/theme'
-import { EmptyState } from '@/shared/components/empty-state'
-import { SkeletonCard } from '@/shared/components/skeleton'
 import type { WorkoutLog } from '@/features/workouts/types'
 
 const STATUS_COLOR: Record<string, string> = {
-  COMPLETED: '#22c55e',
-  IN_PROGRESS: '#f59e0b',
-  PENDING: '#3c87f7',
-  SKIPPED: '#6b7280',
+  COMPLETED: 'text-success',
+  IN_PROGRESS: 'text-warning',
+  PENDING: 'text-primary',
+  SKIPPED: 'text-muted-foreground',
+}
+
+const STATUS_BAR_COLOR: Record<string, string> = {
+  COMPLETED: 'bg-success',
+  IN_PROGRESS: 'bg-warning',
+  PENDING: 'bg-primary',
+  SKIPPED: 'bg-muted-foreground',
 }
 
 function WorkoutCard({ log, onPress }: { log: WorkoutLog; onPress: () => void }) {
   const done = log.exercises.filter((e) => e.completedSets >= e.sets).length
   const total = log.exercises.length
-  const color = STATUS_COLOR[log.status] ?? '#3c87f7'
+  const statusColor = STATUS_COLOR[log.status] ?? 'text-primary'
+  const barColor = STATUS_BAR_COLOR[log.status] ?? 'bg-primary'
 
   return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [styles.cardPressable, pressed && { opacity: 0.75 }]}
-    >
-      <ThemedView type="backgroundElement" style={styles.card}>
-        <View style={[styles.statusBar, { backgroundColor: color }]} />
-        <View style={styles.cardBody}>
-          <View style={styles.cardHeader}>
-            <ThemedText type="default" style={styles.templateName} numberOfLines={1}>
+    <Pressable onPress={onPress} className="active:opacity-75">
+      <View className="bg-card rounded-2xl overflow-hidden flex-row">
+        <View className={`w-1 ${barColor}`} />
+        <View className="flex-1 p-3.5 gap-1">
+          <View className="flex-row justify-between items-center">
+            <Text className="font-semibold flex-1 text-foreground" numberOfLines={1}>
               {log.templateName}
-            </ThemedText>
-            <ThemedText type="small" style={[styles.statusLabel, { color }]}>
+            </Text>
+            <Text className={`text-sm font-semibold ${statusColor}`}>
               {log.status === 'COMPLETED' ? 'Done' : log.status === 'IN_PROGRESS' ? 'Active' : 'Start'}
-            </ThemedText>
+            </Text>
           </View>
-          <ThemedText type="small" themeColor="textSecondary">Day {log.dayNumber} — {log.dayName}</ThemedText>
+          <Text variant="small" muted>Day {log.dayNumber} - {log.dayName}</Text>
           {total > 0 ? (
-            <ThemedText type="small" themeColor="textSecondary">
-              {done}/{total} exercises
-            </ThemedText>
+            <Text variant="small" muted>{done}/{total} exercises</Text>
           ) : null}
         </View>
-      </ThemedView>
+      </View>
     </Pressable>
   )
 }
@@ -55,15 +56,18 @@ export default function ClientHome() {
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safe} edges={['top']}>
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-          <ThemedText type="subtitle" style={styles.heading}>Today</ThemedText>
-          <ThemedText type="small" themeColor="textSecondary" style={styles.date}>{today}</ThemedText>
+    <View className="flex-1 bg-background">
+      <SafeAreaView className="flex-1" edges={['top']}>
+        <ScrollView
+          contentContainerClassName="p-6 gap-3 pb-10"
+          showsVerticalScrollIndicator={false}
+        >
+          <Text variant="subtitle" className="mb-0.5">Today</Text>
+          <Text variant="small" muted className="mb-3">{today}</Text>
 
           {isLoading ? (
-            <View style={styles.skeletons}>
-              {[1, 2].map((i) => <SkeletonCard key={i} style={styles.skeletonCard} />)}
+            <View className="gap-3">
+              {[1, 2].map((i) => <SkeletonCard key={i} className="rounded-2xl" />)}
             </View>
           ) : workouts && workouts.length > 0 ? (
             workouts.map((log) => (
@@ -77,29 +81,11 @@ export default function ClientHome() {
             <EmptyState
               title="Rest day"
               subtitle="No workouts scheduled for today. Great job staying consistent!"
-              style={styles.empty}
+              className="mt-4"
             />
           )}
         </ScrollView>
       </SafeAreaView>
-    </ThemedView>
+    </View>
   )
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  safe: { flex: 1 },
-  scroll: { padding: Spacing.four, gap: Spacing.two, paddingBottom: 40 },
-  heading: { marginBottom: 2 },
-  date: { marginBottom: Spacing.three },
-  skeletons: { gap: 12 },
-  skeletonCard: { borderRadius: 16 },
-  empty: { marginTop: Spacing.four },
-  cardPressable: {},
-  card: { flexDirection: 'row', borderRadius: 16, overflow: 'hidden' },
-  statusBar: { width: 4 },
-  cardBody: { flex: 1, padding: 14, gap: 4 },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  templateName: { fontWeight: '600', flex: 1 },
-  statusLabel: { fontWeight: '600', fontSize: 13 },
-})

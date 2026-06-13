@@ -1,10 +1,9 @@
 import { useRouter } from 'expo-router'
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native'
+import { Pressable, ScrollView, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { ThemedText } from '@/components/themed-text'
-import { ThemedView } from '@/components/themed-view'
-import { Spacing } from '@/constants/theme'
-import { Button } from '@/shared/components/button'
+import { Text } from '@/components/ui/text'
+import { Button } from '@/components/ui/button'
+import { Avatar } from '@/components/ui/avatar'
 import { useAuthStore } from '@/store/auth.store'
 import { secureStore } from '@/shared/lib/secure-store'
 import { queryClient } from '@/shared/lib/query-client'
@@ -23,49 +22,48 @@ export default function ProfileScreen() {
   }
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safe} edges={['top']}>
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-          <ThemedText type="subtitle">Profile</ThemedText>
+    <View className="flex-1 bg-background">
+      <SafeAreaView className="flex-1" edges={['top']}>
+        <ScrollView
+          contentContainerClassName="p-6 gap-4 pb-10"
+          showsVerticalScrollIndicator={false}
+        >
+          <Text variant="subtitle">Profile</Text>
 
-          <View style={styles.avatarSection}>
-            <View style={styles.avatar}>
-              <ThemedText style={styles.avatarText}>
-                {user?.id?.charAt(0)?.toUpperCase() ?? '?'}
-              </ThemedText>
-            </View>
-            <ThemedText type="default" style={styles.userId}>
+          <View className="items-center gap-2.5 py-3">
+            <Avatar name={user?.id ?? '?'} size="lg" />
+            <Text className="font-semibold text-base text-foreground">
               Client #{user?.id?.slice(0, 8)}
-            </ThemedText>
+            </Text>
           </View>
 
           {progress ? (
-            <ThemedView type="backgroundElement" style={styles.statsCard}>
-              <View style={styles.statsRow}>
-                <View style={styles.stat}>
-                  <ThemedText style={styles.statVal}>{progress.totalWorkouts}</ThemedText>
-                  <ThemedText type="small" themeColor="textSecondary">Workouts</ThemedText>
+            <View className="bg-card rounded-2xl p-4">
+              <View className="flex-row items-center">
+                <View className="flex-1 items-center gap-1">
+                  <Text className="text-2xl font-bold text-foreground">{progress.totalWorkouts}</Text>
+                  <Text variant="small" muted>Workouts</Text>
                 </View>
-                <View style={styles.statDivider} />
-                <View style={styles.stat}>
-                  <ThemedText style={styles.statVal}>{progress.streak}</ThemedText>
-                  <ThemedText type="small" themeColor="textSecondary">Day streak</ThemedText>
+                <View className="w-px h-10 bg-border" />
+                <View className="flex-1 items-center gap-1">
+                  <Text className="text-2xl font-bold text-foreground">{progress.streak}</Text>
+                  <Text variant="small" muted>Day streak</Text>
                 </View>
-                <View style={styles.statDivider} />
-                <View style={styles.stat}>
-                  <ThemedText style={styles.statVal}>{Math.round(progress.completionRate * 100)}%</ThemedText>
-                  <ThemedText type="small" themeColor="textSecondary">Completion</ThemedText>
+                <View className="w-px h-10 bg-border" />
+                <View className="flex-1 items-center gap-1">
+                  <Text className="text-2xl font-bold text-foreground">{Math.round(progress.completionRate * 100)}%</Text>
+                  <Text variant="small" muted>Completion</Text>
                 </View>
               </View>
-            </ThemedView>
+            </View>
           ) : null}
 
-          <View style={styles.section}>
-            <Pressable onPress={() => router.push('/(client)/notifications')}>
-              <ThemedView type="backgroundElement" style={styles.menuRow}>
-                <ThemedText type="default">Notifications</ThemedText>
-                <ThemedText themeColor="textSecondary">›</ThemedText>
-              </ThemedView>
+          <View className="gap-2.5">
+            <Pressable onPress={() => router.push('/(client)/notifications')} className="active:opacity-75">
+              <View className="bg-card rounded-xl px-4 py-3.5 flex-row justify-between items-center">
+                <Text className="text-foreground">Notifications</Text>
+                <Text muted className="text-lg">›</Text>
+              </View>
             </Pressable>
           </View>
 
@@ -73,34 +71,10 @@ export default function ProfileScreen() {
             label="Sign out"
             variant="secondary"
             onPress={handleLogout}
-            style={styles.logout}
+            className="mt-2"
           />
         </ScrollView>
       </SafeAreaView>
-    </ThemedView>
+    </View>
   )
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  safe: { flex: 1 },
-  scroll: { padding: Spacing.four, gap: Spacing.three, paddingBottom: 40 },
-  avatarSection: { alignItems: 'center', gap: 10, paddingVertical: Spacing.two },
-  avatar: {
-    width: 80, height: 80, borderRadius: 40,
-    backgroundColor: '#3c87f7', alignItems: 'center', justifyContent: 'center',
-  },
-  avatarText: { color: '#fff', fontSize: 32, fontWeight: '700' },
-  userId: { fontWeight: '600', fontSize: 16 },
-  statsCard: { borderRadius: 16, padding: 16 },
-  statsRow: { flexDirection: 'row', alignItems: 'center' },
-  stat: { flex: 1, alignItems: 'center', gap: 4 },
-  statVal: { fontSize: 24, fontWeight: '700' },
-  statDivider: { width: 1, height: 40, backgroundColor: '#e5e7eb' },
-  section: { gap: 10 },
-  menuRow: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14,
-  },
-  logout: { marginTop: Spacing.two },
-})

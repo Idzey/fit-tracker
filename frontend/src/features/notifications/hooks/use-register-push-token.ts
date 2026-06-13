@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { Platform } from 'react-native'
+import Constants from 'expo-constants'
 import * as Notifications from 'expo-notifications'
 import { apiClient } from '@/shared/lib/api-client'
 
@@ -16,10 +17,19 @@ export function useRegisterPushToken() {
       }
       if (finalStatus !== 'granted') return
 
-      const tokenData = await Notifications.getExpoPushTokenAsync()
-      await apiClient.post('/notifications/push-token', { token: tokenData.data }).catch(() => {})
+      const projectId =
+        Constants.expoConfig?.extra?.eas?.projectId ??
+        Constants.easConfig?.projectId
+      const tokenData = await Notifications.getExpoPushTokenAsync(
+        projectId ? { projectId } : undefined,
+      )
+
+      await apiClient
+        .post('/devices/token', { token: tokenData.data, platform: Platform.OS })
+        .catch(() => {})
     }
 
     register()
   }, [])
 }
+
