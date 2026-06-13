@@ -1,15 +1,13 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'expo-router'
 import { Controller, useForm } from 'react-hook-form'
-import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native'
+import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { z } from 'zod'
-import { ThemedText } from '@/components/themed-text'
-import { ThemedView } from '@/components/themed-view'
+import { Text } from '@/components/ui/text'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { useCreateTemplate } from '@/features/templates/hooks/use-create-template'
-import { Spacing } from '@/constants/theme'
-import { Button } from '@/shared/components/button'
-import { Input } from '@/shared/components/input'
 
 const schema = z.object({
   name: z.string().min(2, 'At least 2 characters'),
@@ -40,22 +38,22 @@ export default function NewTemplateScreen() {
   }
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safe} edges={['top']}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.kav}>
+    <View className="flex-1 bg-background">
+      <SafeAreaView className="flex-1" edges={['top']}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
           <ScrollView
-            contentContainerStyle={styles.scroll}
+            contentContainerClassName="p-6 gap-4"
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            <View style={styles.headerRow}>
+            <View className="gap-2">
               <Pressable onPress={() => router.back()} hitSlop={12}>
-                <ThemedText type="default" themeColor="textSecondary">← Back</ThemedText>
+                <Text variant="small" muted>← Back</Text>
               </Pressable>
-              <ThemedText type="subtitle">New template</ThemedText>
+              <Text variant="subtitle">New template</Text>
             </View>
 
-            <View style={styles.form}>
+            <View className="gap-4">
               <Controller control={control} name="name" render={({ field }) => (
                 <Input label="Template name *" placeholder="Full Body 3x/week"
                   error={errors.name?.message}
@@ -63,7 +61,8 @@ export default function NewTemplateScreen() {
               )} />
               <Controller control={control} name="description" render={({ field }) => (
                 <Input label="Description" placeholder="Beginner-friendly program…"
-                  multiline numberOfLines={3} style={styles.multiline}
+                  multiline numberOfLines={3}
+                  className="h-22 text-top pt-3"
                   error={errors.description?.message}
                   value={field.value} onChangeText={field.onChange} onBlur={field.onBlur} />
               )} />
@@ -72,16 +71,6 @@ export default function NewTemplateScreen() {
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
-    </ThemedView>
+    </View>
   )
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  safe: { flex: 1 },
-  kav: { flex: 1 },
-  scroll: { padding: Spacing.four, gap: Spacing.three },
-  headerRow: { gap: 8 },
-  form: { gap: Spacing.three },
-  multiline: { height: 88, textAlignVertical: 'top', paddingTop: 12 },
-})

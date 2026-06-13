@@ -1,16 +1,14 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { Controller, useFieldArray, useForm } from 'react-hook-form'
-import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native'
+import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { z } from 'zod'
-import { ThemedText } from '@/components/themed-text'
-import { ThemedView } from '@/components/themed-view'
+import { Text } from '@/components/ui/text'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { useTemplate } from '@/features/templates/hooks/use-template'
 import { useAddDay } from '@/features/templates/hooks/use-add-day'
-import { Spacing } from '@/constants/theme'
-import { Button } from '@/shared/components/button'
-import { Input } from '@/shared/components/input'
 
 const exerciseSchema = z.object({
   name: z.string().min(1, 'Required'),
@@ -67,21 +65,21 @@ export default function AddDayScreen() {
   }
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safe} edges={['top']}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.kav}>
+    <View className="flex-1 bg-background">
+      <SafeAreaView className="flex-1" edges={['top']}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
           <ScrollView
-            contentContainerStyle={styles.scroll}
+            contentContainerClassName="p-6 gap-4 pb-10"
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            <View style={styles.headerRow}>
+            <View className="gap-1">
               <Pressable onPress={() => router.back()} hitSlop={12}>
-                <ThemedText type="default" themeColor="textSecondary">← Back</ThemedText>
+                <Text variant="small" muted>← Back</Text>
               </Pressable>
-              <ThemedText type="subtitle">Add Day {nextDayNumber}</ThemedText>
+              <Text variant="subtitle">Add Day {nextDayNumber}</Text>
               {template ? (
-                <ThemedText type="small" themeColor="textSecondary">{template.name}</ThemedText>
+                <Text variant="small" muted>{template.name}</Text>
               ) : null}
             </View>
 
@@ -91,19 +89,19 @@ export default function AddDayScreen() {
                 value={field.value} onChangeText={field.onChange} onBlur={field.onBlur} />
             )} />
 
-            <View style={styles.exercisesSection}>
-              <ThemedText type="default" style={styles.sectionTitle}>Exercises</ThemedText>
+            <View className="gap-3">
+              <Text className="font-semibold text-foreground">Exercises</Text>
               {typeof errors.exercises?.message === 'string' ? (
-                <ThemedText type="small" style={styles.errorText}>{errors.exercises.message}</ThemedText>
+                <Text variant="small" className="text-destructive">{errors.exercises.message}</Text>
               ) : null}
 
               {fields.map((field, index) => (
-                <ThemedView key={field.id} type="backgroundElement" style={styles.exerciseCard}>
-                  <View style={styles.exerciseHeader}>
-                    <ThemedText type="small" style={styles.exerciseNum}>#{index + 1}</ThemedText>
+                <View key={field.id} className="bg-card rounded-xl p-3.5 gap-3">
+                  <View className="flex-row justify-between items-center">
+                    <Text variant="small" className="font-bold text-primary">#{index + 1}</Text>
                     {fields.length > 1 ? (
                       <Pressable onPress={() => remove(index)} hitSlop={8}>
-                        <ThemedText type="small" style={styles.removeText}>Remove</ThemedText>
+                        <Text variant="small" className="text-destructive">Remove</Text>
                       </Pressable>
                     ) : null}
                   </View>
@@ -114,32 +112,32 @@ export default function AddDayScreen() {
                       value={f.value} onChangeText={f.onChange} onBlur={f.onBlur} />
                   )} />
 
-                  <View style={styles.metaRow}>
+                  <View className="flex-row gap-2">
                     <Controller control={control} name={`exercises.${index}.sets`} render={({ field: f }) => (
                       <Input label="Sets *" placeholder="3" keyboardType="number-pad"
-                        style={styles.metaInput}
+                        containerClassName="flex-1"
                         error={errors.exercises?.[index]?.sets?.message}
                         value={f.value?.toString()} onChangeText={f.onChange} onBlur={f.onBlur} />
                     )} />
                     <Controller control={control} name={`exercises.${index}.reps`} render={({ field: f }) => (
                       <Input label="Reps" placeholder="10" keyboardType="number-pad"
-                        style={styles.metaInput}
+                        containerClassName="flex-1"
                         value={f.value?.toString()} onChangeText={f.onChange} onBlur={f.onBlur} />
                     )} />
                     <Controller control={control} name={`exercises.${index}.weight`} render={({ field: f }) => (
                       <Input label="kg" placeholder="60" keyboardType="decimal-pad"
-                        style={styles.metaInput}
+                        containerClassName="flex-1"
                         value={f.value?.toString()} onChangeText={f.onChange} onBlur={f.onBlur} />
                     )} />
                   </View>
-                </ThemedView>
+                </View>
               ))}
 
               <Pressable
-                style={styles.addExBtn}
+                className="border-[1.5px] border-primary border-dashed rounded-xl h-11 items-center justify-center active:opacity-75"
                 onPress={() => append({ name: '', sets: '3', reps: '', weight: '', notes: '' })}
               >
-                <ThemedText type="small" style={styles.addExText}>+ Add exercise</ThemedText>
+                <Text variant="small" className="text-primary font-semibold">+ Add exercise</Text>
               </Pressable>
             </View>
 
@@ -147,28 +145,6 @@ export default function AddDayScreen() {
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
-    </ThemedView>
+    </View>
   )
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  safe: { flex: 1 },
-  kav: { flex: 1 },
-  scroll: { padding: Spacing.four, gap: Spacing.three, paddingBottom: 40 },
-  headerRow: { gap: 4 },
-  exercisesSection: { gap: 12 },
-  sectionTitle: { fontWeight: '600' },
-  errorText: { color: '#e53e3e' },
-  exerciseCard: { borderRadius: 14, padding: 14, gap: 12 },
-  exerciseHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  exerciseNum: { fontWeight: '700', color: '#3c87f7' },
-  removeText: { color: '#e53e3e' },
-  metaRow: { flexDirection: 'row', gap: 8 },
-  metaInput: { flex: 1 },
-  addExBtn: {
-    borderWidth: 1.5, borderColor: '#3c87f7', borderStyle: 'dashed',
-    borderRadius: 12, height: 44, alignItems: 'center', justifyContent: 'center',
-  },
-  addExText: { color: '#3c87f7', fontWeight: '600' },
-})

@@ -1,8 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Controller, useForm } from 'react-hook-form'
-import { Alert, StyleSheet, View } from 'react-native'
-import { Button } from '@/shared/components/button'
-import { Input } from '@/shared/components/input'
+import { Alert, View } from 'react-native'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { useRegister } from '../hooks/use-register'
 import { registerSchema, type RegisterData } from '../schemas'
 
@@ -25,7 +25,7 @@ export function RegisterForm() {
   }
 
   return (
-    <View style={styles.form}>
+    <View className="gap-4">
       <Controller
         control={control}
         name="name"
@@ -78,13 +78,8 @@ export function RegisterForm() {
         label="Create account"
         loading={isPending}
         onPress={handleSubmit(onSubmit)}
-        style={styles.submit}
+        className="mt-2"
       />
     </View>
   )
 }
-
-const styles = StyleSheet.create({
-  form: { gap: 16 },
-  submit: { marginTop: 8 },
-})

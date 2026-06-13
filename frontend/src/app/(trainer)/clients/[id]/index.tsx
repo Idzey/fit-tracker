@@ -1,29 +1,22 @@
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native'
+import { Alert, Pressable, ScrollView, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { ThemedText } from '@/components/themed-text'
-import { ThemedView } from '@/components/themed-view'
+import { Text } from '@/components/ui/text'
+import { Avatar } from '@/components/ui/avatar'
+import { SkeletonCard } from '@/components/ui/skeleton'
 import { useClient } from '@/features/clients/hooks/use-client'
 import { useClientPrograms } from '@/features/clients/hooks/use-client-programs'
 import { useDeleteClient } from '@/features/clients/hooks/use-delete-client'
-import { Spacing } from '@/constants/theme'
-import { SkeletonCard } from '@/shared/components/skeleton'
 
 function InfoRow({ label, value }: { label: string; value: string | number | null | undefined }) {
   if (value == null) return null
   return (
-    <View style={infoStyles.row}>
-      <ThemedText type="small" themeColor="textSecondary" style={infoStyles.label}>{label}</ThemedText>
-      <ThemedText type="small" style={infoStyles.value}>{String(value)}</ThemedText>
+    <View className="flex-row justify-between py-2">
+      <Text variant="small" muted className="flex-1">{label}</Text>
+      <Text variant="small" className="flex-[2] font-semibold text-right text-foreground">{String(value)}</Text>
     </View>
   )
 }
-
-const infoStyles = StyleSheet.create({
-  row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8 },
-  label: { flex: 1 },
-  value: { flex: 2, fontWeight: '600', textAlign: 'right' },
-})
 
 export default function ClientDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -44,98 +37,88 @@ export default function ClientDetailScreen() {
   }
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safe} edges={['top']}>
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-          <View style={styles.headerRow}>
+    <View className="flex-1 bg-background">
+      <SafeAreaView className="flex-1" edges={['top']}>
+        <ScrollView
+          contentContainerClassName="p-6 gap-4 pb-10"
+          showsVerticalScrollIndicator={false}
+        >
+          <View className="mb-1">
             <Pressable onPress={() => router.back()} hitSlop={12}>
-              <ThemedText type="default" themeColor="textSecondary">← Back</ThemedText>
+              <Text variant="small" muted>← Back</Text>
             </Pressable>
           </View>
 
           {isLoading ? (
-            <View style={styles.skeletons}>
+            <View className="gap-3">
               {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
             </View>
           ) : client ? (
             <>
-              {/* Header */}
-              <View style={styles.avatarSection}>
-                <View style={styles.avatar}>
-                  <ThemedText style={styles.avatarText}>{client.name.charAt(0).toUpperCase()}</ThemedText>
-                </View>
-                <ThemedText type="subtitle">{client.name}</ThemedText>
-                <ThemedText type="small" themeColor="textSecondary">{client.email}</ThemedText>
+              <View className="items-center gap-2 py-4">
+                <Avatar name={client.name} size="lg" />
+                <Text variant="subtitle">{client.name}</Text>
+                <Text variant="small" muted>{client.email}</Text>
               </View>
 
-              {/* Stats */}
-              <ThemedView type="backgroundElement" style={styles.card}>
+              <View className="bg-card rounded-2xl p-4 gap-1">
                 <InfoRow label="Age" value={client.age ? `${client.age} y.o.` : null} />
                 <InfoRow label="Weight" value={client.weight ? `${client.weight} kg` : null} />
                 <InfoRow label="Height" value={client.height ? `${client.height} cm` : null} />
                 {client.goals ? (
-                  <View style={{ paddingTop: 8 }}>
-                    <ThemedText type="small" themeColor="textSecondary">Goals</ThemedText>
-                    <ThemedText type="small" style={{ marginTop: 4 }}>{client.goals}</ThemedText>
+                  <View className="pt-2">
+                    <Text variant="small" muted>Goals</Text>
+                    <Text variant="small" className="mt-1 text-foreground">{client.goals}</Text>
                   </View>
                 ) : null}
-              </ThemedView>
+              </View>
 
-              {/* Programs */}
-              <View style={styles.section}>
-                <View style={styles.sectionHeader}>
-                  <ThemedText type="default" style={styles.sectionTitle}>Programs</ThemedText>
+              <View className="gap-3">
+                <View className="flex-row justify-between items-center">
+                  <Text className="font-semibold text-foreground">Programs</Text>
                   <Pressable
                     onPress={() => router.push(`/(trainer)/clients/${id}/assign`)}
                     hitSlop={8}
                   >
-                    <ThemedText type="small" style={styles.assignBtn}>Assign</ThemedText>
+                    <Text variant="small" className="text-primary font-semibold">Assign</Text>
                   </Pressable>
                 </View>
                 {programs && programs.length > 0 ? (
                   programs.map((p) => (
-                    <ThemedView key={p.id} type="backgroundElement" style={styles.programRow}>
-                      <ThemedText type="small" style={{ fontWeight: '600' }}>{p.template.name}</ThemedText>
-                      <ThemedText type="small" themeColor="textSecondary">
+                    <View key={p.id} className="bg-card rounded-xl p-3 gap-0.5">
+                      <Text variant="small" className="font-semibold text-foreground">{p.template.name}</Text>
+                      <Text variant="small" muted>
                         From {new Date(p.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                      </ThemedText>
-                    </ThemedView>
+                      </Text>
+                    </View>
                   ))
                 ) : (
-                  <ThemedText type="small" themeColor="textSecondary">No programs assigned yet</ThemedText>
+                  <Text variant="small" muted>No programs assigned yet</Text>
                 )}
               </View>
 
-              {/* Danger */}
-              <Pressable onPress={handleDelete} style={styles.deleteBtn}>
-                <ThemedText type="small" style={styles.deleteText}>Remove client</ThemedText>
+              <View className="flex-row gap-3">
+                <Pressable
+                  onPress={() => router.push(`/(trainer)/clients/${id}/progress`)}
+                  className="flex-1 bg-primary/10 rounded-xl p-3.5 items-center active:opacity-75"
+                >
+                  <Text variant="small" className="text-primary font-semibold">📊 Progress</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => router.push(`/(trainer)/clients/${id}/photos`)}
+                  className="flex-1 bg-primary/10 rounded-xl p-3.5 items-center active:opacity-75"
+                >
+                  <Text variant="small" className="text-primary font-semibold">📷 Photos</Text>
+                </Pressable>
+              </View>
+
+              <Pressable onPress={handleDelete} className="self-center py-3 active:opacity-75">
+                <Text variant="small" className="text-destructive">Remove client</Text>
               </Pressable>
             </>
           ) : null}
         </ScrollView>
       </SafeAreaView>
-    </ThemedView>
+    </View>
   )
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  safe: { flex: 1 },
-  scroll: { padding: Spacing.four, gap: Spacing.three, paddingBottom: 40 },
-  headerRow: { marginBottom: 4 },
-  skeletons: { gap: 12 },
-  avatarSection: { alignItems: 'center', gap: 8, paddingVertical: Spacing.three },
-  avatar: {
-    width: 72, height: 72, borderRadius: 36,
-    backgroundColor: '#3c87f7', alignItems: 'center', justifyContent: 'center',
-  },
-  avatarText: { color: '#fff', fontSize: 30, fontWeight: '700' },
-  card: { borderRadius: 16, padding: 16, gap: 4 },
-  section: { gap: 12 },
-  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  sectionTitle: { fontWeight: '600' },
-  assignBtn: { color: '#3c87f7', fontWeight: '600' },
-  programRow: { borderRadius: 12, padding: 12, gap: 2 },
-  deleteBtn: { alignSelf: 'center', paddingVertical: 12 },
-  deleteText: { color: '#e53e3e' },
-})

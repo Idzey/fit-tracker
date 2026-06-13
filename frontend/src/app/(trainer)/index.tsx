@@ -1,37 +1,108 @@
-import { StyleSheet } from 'react-native'
+import { Pressable, ScrollView, View } from 'react-native'
+import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { ThemedText } from '@/components/themed-text'
-import { ThemedView } from '@/components/themed-view'
-import { MaxContentWidth, Spacing } from '@/constants/theme'
+import { Text } from '@/components/ui/text'
+import { Avatar } from '@/components/ui/avatar'
+import { SkeletonCard } from '@/components/ui/skeleton'
 import { useAuthStore } from '@/store/auth.store'
+import { useClients } from '@/features/clients/hooks/use-clients'
+import { useNotifications } from '@/features/notifications/hooks/use-notifications'
 
 export default function TrainerDashboard() {
+  const router = useRouter()
   const { user } = useAuthStore()
+  const { data: clientsData, isLoading: loadingClients } = useClients()
+  const { data: notifData } = useNotifications()
+
+  const unread = notifData?.unreadCount ?? 0
+  const greeting = (() => {
+    const h = new Date().getHours()
+    if (h < 12) return 'Good morning'
+    if (h < 18) return 'Good afternoon'
+    return 'Good evening'
+  })()
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safe}>
-        <ThemedView style={styles.content}>
-          <ThemedText type="subtitle">Dashboard</ThemedText>
-          <ThemedText type="small" themeColor="textSecondary">
-            Welcome back, trainer {user?.id.slice(0, 6)}
-          </ThemedText>
-        </ThemedView>
+    <View className="flex-1 bg-background">
+      <SafeAreaView className="flex-1" edges={['top']}>
+        <ScrollView
+          contentContainerClassName="p-6 gap-4 pb-10"
+          showsVerticalScrollIndicator={false}
+        >
+          <View className="flex-row justify-between items-start">
+            <View>
+              <Text variant="subtitle">{greeting}</Text>
+              <Text variant="small" muted>Trainer dashboard</Text>
+            </View>
+            <Pressable
+              onPress={() => router.push('/(trainer)/notifications')}
+              className="p-2 relative"
+            >
+              <Text className="text-2xl">🔔</Text>
+              {unread > 0 ? (
+                <View className="absolute top-1 right-1 bg-destructive rounded-full min-w-[18px] h-[18px] items-center justify-center px-0.5">
+                  <Text className="text-white text-[10px] font-bold">{unread > 9 ? '9+' : unread}</Text>
+                </View>
+              ) : null}
+            </Pressable>
+          </View>
+
+          <View className="flex-row gap-3">
+            <Pressable
+              className="flex-1 active:opacity-75"
+              onPress={() => router.push('/(trainer)/clients/new')}
+            >
+              <View className="bg-card rounded-2xl p-4 gap-2 items-center">
+                <Text className="text-3xl">➕</Text>
+                <Text variant="small" className="font-semibold text-center text-foreground">New client</Text>
+              </View>
+            </Pressable>
+            <Pressable
+              className="flex-1 active:opacity-75"
+              onPress={() => router.push('/(trainer)/templates/new')}
+            >
+              <View className="bg-card rounded-2xl p-4 gap-2 items-center">
+                <Text className="text-3xl">📋</Text>
+                <Text variant="small" className="font-semibold text-center text-foreground">New template</Text>
+              </View>
+            </Pressable>
+          </View>
+
+          <View className="gap-3">
+            <View className="flex-row justify-between items-center">
+              <Text className="font-semibold text-base text-foreground">Clients</Text>
+              <Pressable onPress={() => router.push('/(trainer)/clients')} hitSlop={8}>
+                <Text variant="small" className="text-primary font-semibold">See all</Text>
+              </Pressable>
+            </View>
+
+            {loadingClients ? (
+              <View className="gap-2.5">
+                {[1, 2, 3].map((i) => <SkeletonCard key={i} className="rounded-xl h-16" />)}
+              </View>
+            ) : clientsData?.data && clientsData.data.length > 0 ? (
+              clientsData.data.slice(0, 5).map((client) => (
+                <Pressable
+                  key={client.id}
+                  onPress={() => router.push(`/(trainer)/clients/${client.id}`)}
+                  className="active:opacity-75"
+                >
+                  <View className="bg-card rounded-xl p-3 flex-row items-center gap-3">
+                    <Avatar name={client.name} size="md" />
+                    <View className="flex-1 gap-0.5">
+                      <Text className="font-semibold text-foreground">{client.name}</Text>
+                      <Text variant="small" muted>{client.email}</Text>
+                    </View>
+                    <Text muted className="text-lg">›</Text>
+                  </View>
+                </Pressable>
+              ))
+            ) : (
+              <Text variant="small" muted>No clients yet — add your first one!</Text>
+            )}
+          </View>
+        </ScrollView>
       </SafeAreaView>
-    </ThemedView>
+    </View>
   )
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  safe: { flex: 1 },
-  content: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.four,
-    maxWidth: MaxContentWidth,
-    alignSelf: 'center',
-    width: '100%',
-    gap: Spacing.two,
-  },
-})

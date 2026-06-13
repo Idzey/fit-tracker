@@ -1,6 +1,5 @@
-import { Pressable, StyleSheet, View } from 'react-native'
-import { ThemedText } from '@/components/themed-text'
-import { ThemedView } from '@/components/themed-view'
+import { Pressable, View } from 'react-native'
+import { Text } from '@/components/ui/text'
 import type { TemplateSummary } from '../types'
 
 interface TemplateCardProps {
@@ -12,45 +11,21 @@ export function TemplateCard({ template, onPress }: TemplateCardProps) {
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.pressable, pressed && { opacity: 0.7 }]}
+      className="mx-4 mb-2.5 active:opacity-75"
     >
-      <ThemedView type="backgroundElement" style={styles.card}>
-        <View style={styles.left}>
-          <ThemedText type="default" style={styles.name} numberOfLines={1}>
+      <View className="bg-card flex-row items-center p-4 rounded-2xl gap-3">
+        <View className="flex-1 gap-0.5">
+          <Text className="font-semibold text-foreground" numberOfLines={1}>
             {template.name}
-          </ThemedText>
+          </Text>
           {template.description ? (
-            <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
-              {template.description}
-            </ThemedText>
+            <Text variant="small" muted numberOfLines={1}>{template.description}</Text>
           ) : null}
         </View>
-        <View style={styles.badge}>
-          <ThemedText type="small" style={styles.badgeText}>
-            {template.daysCount}d
-          </ThemedText>
+        <View className="bg-primary/10 rounded-lg px-2.5 py-1">
+          <Text variant="small" className="text-primary font-bold">{template.daysCount}d</Text>
         </View>
-      </ThemedView>
+      </View>
     </Pressable>
   )
 }
-
-const styles = StyleSheet.create({
-  pressable: { marginHorizontal: 16, marginBottom: 10 },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: 16,
-    gap: 12,
-  },
-  left: { flex: 1, gap: 3 },
-  name: { fontWeight: '600' },
-  badge: {
-    backgroundColor: '#3c87f720',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  badgeText: { color: '#3c87f7', fontWeight: '700' },
-})

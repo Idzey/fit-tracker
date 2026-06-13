@@ -1,8 +1,10 @@
 import { Redirect, Tabs } from 'expo-router'
 import { useAuthStore } from '@/store/auth.store'
+import { useRegisterPushToken } from '@/features/notifications/hooks/use-register-push-token'
 
 export default function ClientLayout() {
   const { isAuthenticated, user } = useAuthStore()
+  useRegisterPushToken()
 
   if (!isAuthenticated || user?.role !== 'CLIENT') {
     return <Redirect href="/(auth)/login" />

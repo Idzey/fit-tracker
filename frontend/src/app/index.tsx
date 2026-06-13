@@ -38,7 +38,7 @@ export default function Index() {
     restoreSession()
   }, [])
 
-  if (!ready) return <View style={{ flex: 1 }} />
+  if (!ready) return <View className="flex-1 bg-background" />
 
   if (isAuthenticated) {
     return <Redirect href={user?.role === 'TRAINER' ? '/(trainer)/' : '/(client)/'} />

@@ -1,71 +1,39 @@
 import { useRouter } from 'expo-router'
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet } from 'react-native'
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { ThemedText } from '@/components/themed-text'
-import { ThemedView } from '@/components/themed-view'
+import { Text } from '@/components/ui/text'
 import { LoginForm } from '@/features/auth/components/login-form'
-import { MaxContentWidth, Spacing } from '@/constants/theme'
 
 export default function LoginScreen() {
   const router = useRouter()
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safe}>
+    <View className="flex-1 bg-background">
+      <SafeAreaView className="flex-1" edges={['top']}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.kav}
+          className="flex-1"
         >
           <ScrollView
-            contentContainerStyle={styles.scroll}
+            contentContainerClassName="flex-grow justify-center px-6 py-10 gap-3"
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            <ThemedText type="subtitle" style={styles.heading}>
-              Welcome back
-            </ThemedText>
-            <ThemedText type="small" themeColor="textSecondary" style={styles.sub}>
-              Sign in to your FitTrack account
-            </ThemedText>
+            <Text variant="subtitle" className="mb-1">Welcome back</Text>
+            <Text variant="small" muted className="mb-4">Sign in to your FitTrack account</Text>
 
             <LoginForm />
 
-            <Pressable onPress={() => router.push('/(auth)/register')} style={styles.footer}>
-              <ThemedText type="small" themeColor="textSecondary">
-                Don't have an account?{' '}
-              </ThemedText>
-              <ThemedText type="smallBold" style={styles.link}>
-                Sign up
-              </ThemedText>
+            <Pressable
+              onPress={() => router.push('/(auth)/register')}
+              className="flex-row justify-center flex-wrap mt-4"
+            >
+              <Text variant="small" muted>Don't have an account? </Text>
+              <Text variant="small" className="text-primary font-semibold">Sign up</Text>
             </Pressable>
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
-    </ThemedView>
+    </View>
   )
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  safe: { flex: 1 },
-  kav: { flex: 1 },
-  scroll: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.five,
-    maxWidth: MaxContentWidth,
-    alignSelf: 'center',
-    width: '100%',
-    gap: Spacing.three,
-  },
-  heading: { marginBottom: 4 },
-  sub: { marginBottom: Spacing.two },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: Spacing.three,
-    flexWrap: 'wrap',
-  },
-  link: { color: '#3c87f7' },
-})

@@ -1,17 +1,18 @@
 import { useRouter } from 'expo-router'
-import { StyleSheet } from 'react-native'
+import { Pressable, ScrollView, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { ThemedText } from '@/components/themed-text'
-import { ThemedView } from '@/components/themed-view'
-import { MaxContentWidth, Spacing } from '@/constants/theme'
-import { Button } from '@/shared/components/button'
+import { Text } from '@/components/ui/text'
+import { Button } from '@/components/ui/button'
+import { Avatar } from '@/components/ui/avatar'
 import { useAuthStore } from '@/store/auth.store'
 import { secureStore } from '@/shared/lib/secure-store'
 import { queryClient } from '@/shared/lib/query-client'
+import { useMyProgress } from '@/features/workouts/hooks/use-my-progress'
 
 export default function ProfileScreen() {
-  const { logout } = useAuthStore()
+  const { logout, user } = useAuthStore()
   const router = useRouter()
+  const { data: progress } = useMyProgress()
 
   const handleLogout = async () => {
     logout()
@@ -21,36 +22,59 @@ export default function ProfileScreen() {
   }
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safe}>
-        <ThemedView style={styles.content}>
-          <ThemedText type="subtitle">Profile</ThemedText>
-          <ThemedText type="small" themeColor="textSecondary">
-            Account details coming in Sprint 1
-          </ThemedText>
+    <View className="flex-1 bg-background">
+      <SafeAreaView className="flex-1" edges={['top']}>
+        <ScrollView
+          contentContainerClassName="p-6 gap-4 pb-10"
+          showsVerticalScrollIndicator={false}
+        >
+          <Text variant="subtitle">Profile</Text>
+
+          <View className="items-center gap-2.5 py-3">
+            <Avatar name={user?.id ?? '?'} size="lg" />
+            <Text className="font-semibold text-base text-foreground">
+              Client #{user?.id?.slice(0, 8)}
+            </Text>
+          </View>
+
+          {progress ? (
+            <View className="bg-card rounded-2xl p-4">
+              <View className="flex-row items-center">
+                <View className="flex-1 items-center gap-1">
+                  <Text className="text-2xl font-bold text-foreground">{progress.totalWorkouts}</Text>
+                  <Text variant="small" muted>Workouts</Text>
+                </View>
+                <View className="w-px h-10 bg-border" />
+                <View className="flex-1 items-center gap-1">
+                  <Text className="text-2xl font-bold text-foreground">{progress.streak}</Text>
+                  <Text variant="small" muted>Day streak</Text>
+                </View>
+                <View className="w-px h-10 bg-border" />
+                <View className="flex-1 items-center gap-1">
+                  <Text className="text-2xl font-bold text-foreground">{Math.round(progress.completionRate * 100)}%</Text>
+                  <Text variant="small" muted>Completion</Text>
+                </View>
+              </View>
+            </View>
+          ) : null}
+
+          <View className="gap-2.5">
+            <Pressable onPress={() => router.push('/(client)/notifications')} className="active:opacity-75">
+              <View className="bg-card rounded-xl px-4 py-3.5 flex-row justify-between items-center">
+                <Text className="text-foreground">Notifications</Text>
+                <Text muted className="text-lg">›</Text>
+              </View>
+            </Pressable>
+          </View>
+
           <Button
             label="Sign out"
             variant="secondary"
             onPress={handleLogout}
-            style={styles.logout}
+            className="mt-2"
           />
-        </ThemedView>
+        </ScrollView>
       </SafeAreaView>
-    </ThemedView>
+    </View>
   )
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  safe: { flex: 1 },
-  content: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.four,
-    maxWidth: MaxContentWidth,
-    alignSelf: 'center',
-    width: '100%',
-    gap: Spacing.two,
-  },
-  logout: { marginTop: Spacing.five },
-})

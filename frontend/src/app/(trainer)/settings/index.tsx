@@ -1,17 +1,32 @@
-import { StyleSheet } from 'react-native'
+import { Pressable, ScrollView, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { ThemedText } from '@/components/themed-text'
-import { ThemedView } from '@/components/themed-view'
-import { MaxContentWidth, Spacing } from '@/constants/theme'
-import { Button } from '@/shared/components/button'
+import { useRouter } from 'expo-router'
+import { Text } from '@/components/ui/text'
+import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/store/auth.store'
 import { secureStore } from '@/shared/lib/secure-store'
 import { queryClient } from '@/shared/lib/query-client'
-import { useRouter } from 'expo-router'
+import { useSubscription } from '@/features/subscriptions/hooks/use-subscription'
+import { PLAN_DETAILS } from '@/features/subscriptions/types'
+
+function SettingsRow({ label, value, onPress }: { label: string; value?: string; onPress?: () => void }) {
+  return (
+    <Pressable onPress={onPress} disabled={!onPress} className={onPress ? 'active:opacity-75' : ''}>
+      <View className="bg-card rounded-xl px-4 py-3.5 flex-row items-center justify-between">
+        <Text className="font-medium text-foreground">{label}</Text>
+        <View className="flex-row items-center gap-1.5">
+          {value ? <Text variant="small" muted>{value}</Text> : null}
+          {onPress ? <Text muted className="text-lg">›</Text> : null}
+        </View>
+      </View>
+    </Pressable>
+  )
+}
 
 export default function SettingsScreen() {
   const { logout } = useAuthStore()
   const router = useRouter()
+  const { data: sub } = useSubscription()
 
   const handleLogout = async () => {
     logout()
@@ -20,37 +35,44 @@ export default function SettingsScreen() {
     router.replace('/(auth)/login')
   }
 
+  const planLabel = sub ? `${PLAN_DETAILS[sub.plan].label} · ${sub.currentClientCount}/${sub.clientLimit} clients` : undefined
+
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safe}>
-        <ThemedView style={styles.content}>
-          <ThemedText type="subtitle">Settings</ThemedText>
-          <ThemedText type="small" themeColor="textSecondary">
-            Account & preferences
-          </ThemedText>
+    <View className="flex-1 bg-background">
+      <SafeAreaView className="flex-1" edges={['top']}>
+        <ScrollView
+          contentContainerClassName="p-6 gap-4 pb-10"
+          showsVerticalScrollIndicator={false}
+        >
+          <Text variant="subtitle">Settings</Text>
+
+          <View className="gap-2.5">
+            <Text variant="label" muted className="mb-0.5">ACCOUNT</Text>
+            <SettingsRow
+              label="Subscription"
+              value={planLabel}
+              onPress={() => router.push('/(trainer)/settings/subscription')}
+            />
+            <SettingsRow
+              label="Notifications"
+              onPress={() => router.push('/(trainer)/notifications')}
+            />
+          </View>
+
+          <View className="gap-2.5">
+            <Text variant="label" muted className="mb-0.5">LEGAL</Text>
+            <SettingsRow label="Privacy Policy" />
+            <SettingsRow label="Terms of Service" />
+          </View>
+
           <Button
             label="Sign out"
             variant="secondary"
             onPress={handleLogout}
-            style={styles.logout}
+            className="mt-2"
           />
-        </ThemedView>
+        </ScrollView>
       </SafeAreaView>
-    </ThemedView>
+    </View>
   )
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  safe: { flex: 1 },
-  content: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.four,
-    maxWidth: MaxContentWidth,
-    alignSelf: 'center',
-    width: '100%',
-    gap: Spacing.two,
-  },
-  logout: { marginTop: Spacing.five },
-})

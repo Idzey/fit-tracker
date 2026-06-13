@@ -1,13 +1,11 @@
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { Alert, FlatList, Pressable, StyleSheet, View } from 'react-native'
+import { Alert, FlatList, Pressable, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { ThemedText } from '@/components/themed-text'
-import { ThemedView } from '@/components/themed-view'
+import { Text } from '@/components/ui/text'
+import { SkeletonCard } from '@/components/ui/skeleton'
+import { EmptyState } from '@/components/ui/empty-state'
 import { useTemplates } from '@/features/templates/hooks/use-templates'
 import { useAssignProgram } from '@/features/templates/hooks/use-assign-program'
-import { Spacing } from '@/constants/theme'
-import { EmptyState } from '@/shared/components/empty-state'
-import { SkeletonCard } from '@/shared/components/skeleton'
 
 export default function AssignProgramScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -33,17 +31,17 @@ export default function AssignProgramScreen() {
   }
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safe} edges={['top']}>
-        <View style={styles.header}>
+    <View className="flex-1 bg-background">
+      <SafeAreaView className="flex-1" edges={['top']}>
+        <View className="p-6 pb-3 gap-2">
           <Pressable onPress={() => router.back()} hitSlop={12}>
-            <ThemedText type="default" themeColor="textSecondary">← Back</ThemedText>
+            <Text variant="small" muted>← Back</Text>
           </Pressable>
-          <ThemedText type="subtitle">Assign program</ThemedText>
+          <Text variant="subtitle">Assign program</Text>
         </View>
 
         {isLoading ? (
-          <View style={styles.skeletons}>
+          <View className="px-6 gap-2.5">
             {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
           </View>
         ) : (
@@ -54,19 +52,17 @@ export default function AssignProgramScreen() {
               <Pressable
                 onPress={() => handleAssign(item.id, item.name)}
                 disabled={isPending}
-                style={({ pressed }) => [styles.pressable, pressed && { opacity: 0.7 }]}
+                className="active:opacity-75 mx-6 mb-2.5"
               >
-                <ThemedView type="backgroundElement" style={styles.card}>
-                  <View style={styles.left}>
-                    <ThemedText type="default" style={styles.name}>{item.name}</ThemedText>
+                <View className="bg-card flex-row items-center p-4 rounded-2xl gap-3">
+                  <View className="flex-1 gap-0.5">
+                    <Text className="font-semibold text-foreground">{item.name}</Text>
                     {item.description ? (
-                      <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
-                        {item.description}
-                      </ThemedText>
+                      <Text variant="small" muted numberOfLines={1}>{item.description}</Text>
                     ) : null}
                   </View>
-                  <ThemedText type="small" themeColor="textSecondary">{item.daysCount} days</ThemedText>
-                </ThemedView>
+                  <Text variant="small" muted>{item.daysCount} days</Text>
+                </View>
               </Pressable>
             )}
             ListEmptyComponent={
@@ -77,22 +73,10 @@ export default function AssignProgramScreen() {
                 onAction={() => router.replace('/(trainer)/templates/')}
               />
             }
-            contentContainerStyle={styles.list}
+            contentContainerStyle={{ paddingTop: 4, paddingBottom: 40 }}
           />
         )}
       </SafeAreaView>
-    </ThemedView>
+    </View>
   )
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  safe: { flex: 1 },
-  header: { padding: Spacing.four, paddingBottom: Spacing.two, gap: 8 },
-  skeletons: { paddingHorizontal: Spacing.four, gap: 10 },
-  list: { paddingHorizontal: Spacing.four, gap: 10, paddingBottom: 40 },
-  pressable: {},
-  card: { flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: 16, gap: 12 },
-  left: { flex: 1, gap: 3 },
-  name: { fontWeight: '600' },
-})
