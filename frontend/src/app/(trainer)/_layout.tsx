@@ -12,7 +12,7 @@ export default function TrainerLayout() {
     <Tabs screenOptions={{ headerShown: false }}>
       <Tabs.Screen name="index" options={{ title: 'Dashboard' }} />
       <Tabs.Screen name="clients" options={{ title: 'Clients' }} />
-      <Tabs.Screen name="templates" options={{ title: 'Templates', href: null }} />
+      <Tabs.Screen name="templates" options={{ title: 'Templates' }} />
       <Tabs.Screen name="settings" options={{ title: 'Settings' }} />
     </Tabs>
   )
