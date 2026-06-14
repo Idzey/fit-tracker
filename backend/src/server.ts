@@ -4,9 +4,12 @@ import cors from '@fastify/cors'
 import helmet from '@fastify/helmet'
 import rateLimit from '@fastify/rate-limit'
 import jwt from '@fastify/jwt'
+import swagger from '@fastify/swagger'
+import swaggerUi from '@fastify/swagger-ui'
 import { ZodError } from 'zod'
 import { prisma } from './lib/prisma'
 import { captureException, flushSentry } from './lib/sentry'
+import { swaggerOptions, swaggerUiOptions } from './lib/swagger'
 import { authRoutes } from './modules/auth/auth.routes'
 import { clientsRoutes } from './modules/clients/clients.routes'
 import { notificationsRoutes } from './modules/notifications/notifications.routes'
@@ -52,6 +55,9 @@ fastify.register(jwt, {
   secret: process.env.JWT_SECRET ?? 'dev-secret-change-in-prod',
 })
 
+fastify.register(swagger, swaggerOptions)
+fastify.register(swaggerUi, swaggerUiOptions)
+
 fastify.setErrorHandler((error, req, reply) => {
   if (error instanceof AppError) {
     req.log.warn({ err: error, code: error.code }, 'Handled application error')
@@ -67,9 +73,13 @@ fastify.setErrorHandler((error, req, reply) => {
     })
   }
 
-  if (error.validation) {
+  const fastifyError = error as { validation?: unknown; message?: string }
+  if (fastifyError.validation) {
     req.log.warn({ err: error, path: req.url }, 'Fastify validation error')
-    return reply.status(400).send({ code: 'VALIDATION_ERROR', message: error.message })
+    return reply.status(400).send({
+      code: 'VALIDATION_ERROR',
+      message: fastifyError.message ?? 'Validation failed',
+    })
   }
 
   captureException(error, {

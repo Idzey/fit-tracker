@@ -7,7 +7,7 @@ import { useAuthStore, type AuthUser } from '@/store/auth.store'
 
 export default function Index() {
   const [ready, setReady] = useState(false)
-  const { isAuthenticated, user, setAuth, logout } = useAuthStore()
+  const { isAuthenticated, user } = useAuthStore()
 
   useEffect(() => {
     async function restoreSession() {
@@ -26,9 +26,13 @@ export default function Index() {
 
         await secureStore.setAccessToken(data.accessToken)
         await secureStore.setRefreshToken(data.refreshToken)
-        setAuth({ user: data.user, accessToken: data.accessToken, refreshToken: data.refreshToken })
+        useAuthStore.getState().setAuth({
+          user: data.user,
+          accessToken: data.accessToken,
+          refreshToken: data.refreshToken,
+        })
       } catch {
-        logout()
+        useAuthStore.getState().logout()
         await secureStore.clearTokens()
       } finally {
         setReady(true)
@@ -36,7 +40,7 @@ export default function Index() {
     }
 
     restoreSession()
-  }, [logout, setAuth])
+  }, []) // run once on mount — store actions accessed via getState() to avoid unstable deps
 
   if (!ready) return <View className="flex-1 bg-background" />
 

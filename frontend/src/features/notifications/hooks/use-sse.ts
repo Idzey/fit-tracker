@@ -44,6 +44,6 @@ export function useSse() {
       sseClient.off('photo_uploaded', invalidatePhotos)
       sseClient.disconnect()
     }
-  }, [accessToken, qc])
+  }, [accessToken]) // qc is stable — QueryClient never changes reference
 }
 
