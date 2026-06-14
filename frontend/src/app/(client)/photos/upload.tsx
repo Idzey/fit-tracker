@@ -74,14 +74,20 @@ export default function UploadPhotoScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View className="flex-row items-center justify-between mb-1">
-            <Pressable onPress={() => router.back()} hitSlop={12}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} hitSlop={12}>
               <Text variant="small" muted>Back</Text>
             </Pressable>
             <Text variant="subtitle">Upload Photo</Text>
             <View style={{ width: 48 }} />
           </View>
 
-          <Pressable onPress={pick} className="rounded-3xl overflow-hidden" style={{ height: 340 }}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Choose photo from library"
+            onPress={pick}
+            className="rounded-3xl overflow-hidden"
+            style={{ height: 340 }}
+          >
             {uri ? (
               <Image source={{ uri }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
             ) : (

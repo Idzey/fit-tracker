@@ -2,6 +2,7 @@ import * as React from 'react';
 import { ActivityIndicator, Pressable, type PressableProps } from 'react-native';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
+import { triggerImpact } from '@/shared/lib/haptics';
 import { Text } from './text';
 
 const buttonVariants = cva(
@@ -43,6 +44,7 @@ interface ButtonProps extends PressableProps, VariantProps<typeof buttonVariants
   label?: string;
   loading?: boolean;
   children?: React.ReactNode;
+  haptic?: false | 'light' | 'medium' | 'heavy';
 }
 
 export function Button({
@@ -53,11 +55,26 @@ export function Button({
   disabled,
   className,
   children,
+  haptic = 'light',
+  onPress,
+  accessibilityLabel,
+  accessibilityState,
   ...props
 }: ButtonProps) {
+  const isDisabled = disabled || loading;
+
+  const handlePress: PressableProps['onPress'] = (event) => {
+    if (!isDisabled && haptic) triggerImpact(haptic);
+    onPress?.(event);
+  };
+
   return (
     <Pressable
-      disabled={disabled || loading}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? label}
+      accessibilityState={{ disabled: isDisabled, busy: loading, ...accessibilityState }}
+      disabled={isDisabled}
+      onPress={handlePress}
       className={cn(buttonVariants({ variant, size }), className)}
       {...props}
     >

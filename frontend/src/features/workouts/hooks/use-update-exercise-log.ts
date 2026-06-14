@@ -1,24 +1,15 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { apiClient } from '@/shared/lib/api-client'
 import type { WorkoutLog } from '../types'
+import { workoutMutationKeys } from './mutation-keys'
+import { updateExerciseLogRequest } from './offline-mutations'
 import { workoutKeys } from './query-keys'
-
-interface UpdateExerciseLogVars {
-  logId: string
-  exerciseLogId: string
-  completedSets: number
-  actualReps?: number | null
-  actualWeight?: number | null
-}
 
 export function useUpdateExerciseLog() {
   const qc = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ logId, exerciseLogId, ...body }: UpdateExerciseLogVars) =>
-      apiClient
-        .put(`/workouts/${logId}/exercises/${exerciseLogId}`, body)
-        .then((r) => r.data),
+    mutationKey: workoutMutationKeys.updateExerciseLog(),
+    mutationFn: updateExerciseLogRequest,
     onMutate: async ({ logId, exerciseLogId, completedSets }) => {
       await qc.cancelQueries({ queryKey: workoutKeys.log(logId) })
       const previous = qc.getQueryData<WorkoutLog>(workoutKeys.log(logId))
@@ -41,6 +32,7 @@ export function useUpdateExerciseLog() {
     onSettled: (_data, _err, { logId }) => {
       qc.invalidateQueries({ queryKey: workoutKeys.log(logId) })
       qc.invalidateQueries({ queryKey: workoutKeys.today() })
+      qc.invalidateQueries({ queryKey: workoutKeys.progress() })
     },
   })
 }

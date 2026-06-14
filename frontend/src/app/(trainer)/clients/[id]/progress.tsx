@@ -4,9 +4,11 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Text } from '@/components/ui/text'
 import { Skeleton, SkeletonCard } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
+import { ErrorState } from '@/components/ui/error-state'
 import { useClientWorkoutLogs } from '@/features/clients/hooks/use-client-workout-logs'
 import { useClientProgress } from '@/features/clients/hooks/use-client-progress'
 import type { WorkoutLog } from '@/features/workouts/types'
+import { getErrorMessage } from '@/shared/lib/error-message'
 
 const STATUS_COLOR: Record<string, string> = {
   COMPLETED: 'text-success',
@@ -40,8 +42,8 @@ function WorkoutRow({ log }: { log: WorkoutLog }) {
         <Text className="font-semibold text-foreground" numberOfLines={1}>{log.templateName}</Text>
         <Text variant="small" muted>
           Day {log.dayNumber} - {log.dayName}
-          {total > 0 ? ` · ${done}/${total} ex` : ''}
-          {date ? ` · ${date}` : ''}
+          {total > 0 ? ` - ${done}/${total} ex` : ''}
+          {date ? ` - ${date}` : ''}
         </Text>
       </View>
       <Text className={`text-[11px] font-semibold ${statusColor}`}>{log.status}</Text>
@@ -52,10 +54,24 @@ function WorkoutRow({ log }: { log: WorkoutLog }) {
 export default function ClientProgressScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const router = useRouter()
-  const { data: logs, isLoading: loadingLogs } = useClientWorkoutLogs(id)
-  const { data: summary, isLoading: loadingSummary } = useClientProgress(id)
+  const {
+    data: logs,
+    isLoading: loadingLogs,
+    isError: logsError,
+    error: logsErrorValue,
+    refetch: refetchLogs,
+  } = useClientWorkoutLogs(id)
+  const {
+    data: summary,
+    isLoading: loadingSummary,
+    isError: summaryError,
+    error: summaryErrorValue,
+    refetch: refetchSummary,
+  } = useClientProgress(id)
 
   const isLoading = loadingLogs || loadingSummary
+  const isError = logsError || summaryError
+  const error = logsErrorValue ?? summaryErrorValue
 
   return (
     <View className="flex-1 bg-background">
@@ -65,8 +81,8 @@ export default function ClientProgressScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View className="flex-row items-center justify-between mb-1">
-            <Pressable onPress={() => router.back()} hitSlop={12}>
-              <Text variant="small" muted>← Back</Text>
+            <Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} hitSlop={12}>
+              <Text variant="small" muted>Back</Text>
             </Pressable>
             <Text variant="subtitle">Client Progress</Text>
             <View style={{ width: 48 }} />
@@ -86,6 +102,14 @@ export default function ClientProgressScreen() {
                 {[1, 2, 3].map((i) => <SkeletonCard key={i} className="rounded-xl h-16" />)}
               </View>
             </>
+          ) : isError ? (
+            <ErrorState
+              message={getErrorMessage(error, 'Could not load client progress.')}
+              onRetry={() => {
+                refetchLogs()
+                refetchSummary()
+              }}
+            />
           ) : (
             <>
               {summary ? (

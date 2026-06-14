@@ -44,7 +44,7 @@ services:
       R2_BUCKET: fittrack
       PORT: 3000
       LOG_LEVEL: debug
-      ALLOWED_ORIGINS: http://localhost:8081
+      ALLOWED_ORIGINS: http://localhost:8081,http://localhost:8082
     ports:
       - "3000:3000"
     depends_on:

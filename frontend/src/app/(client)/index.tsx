@@ -4,8 +4,10 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Text } from '@/components/ui/text'
 import { SkeletonCard } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
+import { ErrorState } from '@/components/ui/error-state'
 import { useTodayWorkouts } from '@/features/workouts/hooks/use-today-workouts'
 import type { WorkoutLog } from '@/features/workouts/types'
+import { getErrorMessage } from '@/shared/lib/error-message'
 
 const STATUS_COLOR: Record<string, string> = {
   COMPLETED: 'text-success',
@@ -28,7 +30,12 @@ function WorkoutCard({ log, onPress }: { log: WorkoutLog; onPress: () => void })
   const barColor = STATUS_BAR_COLOR[log.status] ?? 'bg-primary'
 
   return (
-    <Pressable onPress={onPress} className="active:opacity-75">
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`Open workout ${log.templateName}`}
+      onPress={onPress}
+      className="active:opacity-75"
+    >
       <View className="bg-card rounded-2xl overflow-hidden flex-row">
         <View className={`w-1 ${barColor}`} />
         <View className="flex-1 p-3.5 gap-1">
@@ -52,7 +59,7 @@ function WorkoutCard({ log, onPress }: { log: WorkoutLog; onPress: () => void })
 
 export default function ClientHome() {
   const router = useRouter()
-  const { data: workouts, isLoading } = useTodayWorkouts()
+  const { data: workouts, isLoading, isError, error, refetch } = useTodayWorkouts()
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
 
   return (
@@ -69,6 +76,12 @@ export default function ClientHome() {
             <View className="gap-3">
               {[1, 2].map((i) => <SkeletonCard key={i} className="rounded-2xl" />)}
             </View>
+          ) : isError ? (
+            <ErrorState
+              message={getErrorMessage(error, 'Could not load today workouts.')}
+              onRetry={() => refetch()}
+              className="mt-4"
+            />
           ) : workouts && workouts.length > 0 ? (
             workouts.map((log) => (
               <WorkoutCard

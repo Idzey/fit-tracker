@@ -1,5 +1,7 @@
 import axios, { create } from 'axios'
 import { secureStore } from './secure-store'
+import { clearPersistedQueryClient } from './query-persistence'
+import { captureException } from './sentry'
 import { useAuthStore } from '@/store/auth.store'
 
 export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000'
@@ -32,14 +34,25 @@ apiClient.interceptors.response.use(
   (res) => res,
   async (error) => {
     const original = error.config as typeof error.config & { _retry?: boolean }
+    const status = error.response?.status
 
-    if (error.response?.status !== 401 || original._retry) {
+    if (!status || status >= 500) {
+      captureException(error, {
+        layer: 'api-client',
+        method: original?.method,
+        url: original?.url,
+        status,
+      })
+    }
+
+    if (status !== 401 || original._retry) {
       return Promise.reject(error)
     }
 
     const { refreshToken, logout, setTokens } = useAuthStore.getState()
     if (!refreshToken) {
       logout()
+      await clearPersistedQueryClient()
       await secureStore.clearTokens()
       return Promise.reject(error)
     }
@@ -72,6 +85,7 @@ apiClient.interceptors.response.use(
     } catch (refreshError) {
       flushQueue(refreshError)
       logout()
+      await clearPersistedQueryClient()
       await secureStore.clearTokens()
       return Promise.reject(refreshError)
     } finally {

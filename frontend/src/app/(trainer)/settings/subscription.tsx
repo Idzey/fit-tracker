@@ -4,9 +4,11 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Text } from '@/components/ui/text'
 import { Button } from '@/components/ui/button'
 import { SkeletonCard } from '@/components/ui/skeleton'
+import { ErrorState } from '@/components/ui/error-state'
 import { useSubscription } from '@/features/subscriptions/hooks/use-subscription'
 import { useYoomoneyUrl } from '@/features/subscriptions/hooks/use-yoomoney-url'
 import { PLAN_DETAILS, type SubscriptionPlan } from '@/features/subscriptions/types'
+import { getErrorMessage } from '@/shared/lib/error-message'
 
 function limitLabel(limit: number | null) {
   return limit == null ? 'unlimited' : String(limit)
@@ -49,7 +51,7 @@ function PlanCard({
 
 export default function SubscriptionScreen() {
   const router = useRouter()
-  const { data: sub, isLoading } = useSubscription()
+  const { data: sub, isLoading, isError, error, refetch } = useSubscription()
   const { mutate: getUrl, isPending: gettingUrl } = useYoomoneyUrl()
 
   const handleUpgrade = () => {
@@ -79,7 +81,7 @@ export default function SubscriptionScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View className="flex-row items-center justify-between mb-1">
-            <Pressable onPress={() => router.back()} hitSlop={12}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} hitSlop={12}>
               <Text variant="small" muted>Back</Text>
             </Pressable>
             <Text variant="subtitle">Subscription</Text>
@@ -90,6 +92,12 @@ export default function SubscriptionScreen() {
             <View className="gap-3">
               {[1, 2].map((i) => <SkeletonCard key={i} />)}
             </View>
+          ) : isError ? (
+            <ErrorState
+              message={getErrorMessage(error, 'Could not load subscription details.')}
+              onRetry={() => refetch()}
+              className="mt-4"
+            />
           ) : sub ? (
             <>
               <View className="bg-card rounded-2xl p-4 gap-2.5">

@@ -2,7 +2,9 @@ import { ScrollView, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Text } from '@/components/ui/text'
 import { Skeleton } from '@/components/ui/skeleton'
+import { ErrorState } from '@/components/ui/error-state'
 import { useMyProgress } from '@/features/workouts/hooks/use-my-progress'
+import { getErrorMessage } from '@/shared/lib/error-message'
 
 function StatCard({ label, value, className }: { label: string; value: string | number; className?: string }) {
   return (
@@ -25,7 +27,7 @@ function StatCardSkeleton() {
 }
 
 export default function ProgressScreen() {
-  const { data: progress, isLoading } = useMyProgress()
+  const { data: progress, isLoading, isError, error, refetch } = useMyProgress()
 
   const completionPct = progress ? Math.round(progress.completionRate * 100) : 0
   const lastWorkout = progress?.lastWorkoutAt
@@ -48,6 +50,12 @@ export default function ProgressScreen() {
               </View>
               <Skeleton className="h-28 rounded-2xl" />
             </>
+          ) : isError ? (
+            <ErrorState
+              message={getErrorMessage(error, 'Could not load progress.')}
+              onRetry={() => refetch()}
+              className="mt-4"
+            />
           ) : progress ? (
             <>
               <View className="flex-row flex-wrap gap-3">

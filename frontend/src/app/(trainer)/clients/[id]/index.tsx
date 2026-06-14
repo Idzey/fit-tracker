@@ -4,9 +4,11 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Text } from '@/components/ui/text'
 import { Avatar } from '@/components/ui/avatar'
 import { SkeletonCard } from '@/components/ui/skeleton'
+import { ErrorState } from '@/components/ui/error-state'
 import { useClient } from '@/features/clients/hooks/use-client'
 import { useClientPrograms } from '@/features/clients/hooks/use-client-programs'
 import { useDeleteClient } from '@/features/clients/hooks/use-delete-client'
+import { getErrorMessage } from '@/shared/lib/error-message'
 
 function InfoRow({ label, value }: { label: string; value: string | number | null | undefined }) {
   if (value == null) return null
@@ -21,8 +23,13 @@ function InfoRow({ label, value }: { label: string; value: string | number | nul
 export default function ClientDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const router = useRouter()
-  const { data: client, isLoading } = useClient(id)
-  const { data: programs } = useClientPrograms(id)
+  const { data: client, isLoading, isError, error, refetch } = useClient(id)
+  const {
+    data: programs,
+    isError: programsError,
+    error: programsErrorValue,
+    refetch: refetchPrograms,
+  } = useClientPrograms(id)
   const { mutate: deleteClient } = useDeleteClient()
 
   const handleDelete = () => {
@@ -44,8 +51,8 @@ export default function ClientDetailScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View className="mb-1">
-            <Pressable onPress={() => router.back()} hitSlop={12}>
-              <Text variant="small" muted>← Back</Text>
+            <Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} hitSlop={12}>
+              <Text variant="small" muted>Back</Text>
             </Pressable>
           </View>
 
@@ -53,6 +60,11 @@ export default function ClientDetailScreen() {
             <View className="gap-3">
               {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
             </View>
+          ) : isError ? (
+            <ErrorState
+              message={getErrorMessage(error, 'Could not load client details.')}
+              onRetry={() => refetch()}
+            />
           ) : client ? (
             <>
               <View className="items-center gap-2 py-4">
@@ -83,7 +95,13 @@ export default function ClientDetailScreen() {
                     <Text variant="small" className="text-primary font-semibold">Assign</Text>
                   </Pressable>
                 </View>
-                {programs && programs.length > 0 ? (
+                {programsError ? (
+                  <ErrorState
+                    message={getErrorMessage(programsErrorValue, 'Could not load programs.')}
+                    onRetry={() => refetchPrograms()}
+                    className="py-4"
+                  />
+                ) : programs && programs.length > 0 ? (
                   programs.map((p) => (
                     <View key={p.id} className="bg-card rounded-xl p-3 gap-0.5">
                       <Text variant="small" className="font-semibold text-foreground">{p.template.name}</Text>
@@ -100,19 +118,23 @@ export default function ClientDetailScreen() {
               <View className="flex-row gap-3">
                 <Pressable
                   onPress={() => router.push(`/(trainer)/clients/${id}/progress`)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Open client progress"
                   className="flex-1 bg-primary/10 rounded-xl p-3.5 items-center active:opacity-75"
                 >
-                  <Text variant="small" className="text-primary font-semibold">📊 Progress</Text>
+                  <Text variant="small" className="text-primary font-semibold">Progress</Text>
                 </Pressable>
                 <Pressable
                   onPress={() => router.push(`/(trainer)/clients/${id}/photos`)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Open client photos"
                   className="flex-1 bg-primary/10 rounded-xl p-3.5 items-center active:opacity-75"
                 >
-                  <Text variant="small" className="text-primary font-semibold">📷 Photos</Text>
+                  <Text variant="small" className="text-primary font-semibold">Photos</Text>
                 </Pressable>
               </View>
 
-              <Pressable onPress={handleDelete} className="self-center py-3 active:opacity-75">
+              <Pressable accessibilityRole="button" accessibilityLabel="Remove client" onPress={handleDelete} className="self-center py-3 active:opacity-75">
                 <Text variant="small" className="text-destructive">Remove client</Text>
               </Pressable>
             </>

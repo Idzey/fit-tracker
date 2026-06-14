@@ -7,9 +7,12 @@ import { z } from 'zod'
 import { Text } from '@/components/ui/text'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { ErrorState } from '@/components/ui/error-state'
+import { SkeletonCard } from '@/components/ui/skeleton'
 import { useCreateClient } from '@/features/clients/hooks/use-create-client'
 import { useSubscription } from '@/features/subscriptions/hooks/use-subscription'
 import { Paywall } from '@/features/subscriptions/components/paywall'
+import { getErrorMessage } from '@/shared/lib/error-message'
 
 const schema = z.object({
   name: z.string().min(2, 'At least 2 characters'),
@@ -25,7 +28,7 @@ type FormData = z.infer<typeof schema>
 export default function NewClientScreen() {
   const router = useRouter()
   const { mutate: create, isPending } = useCreateClient()
-  const { data: sub } = useSubscription()
+  const { data: sub, isLoading: loadingSub, isError: subError, error: subErrorValue, refetch: refetchSub } = useSubscription()
   const atLimit = sub != null && sub.clientLimit != null && sub.currentClientCount >= sub.clientLimit
 
   const { control, handleSubmit, formState: { errors } } = useForm<FormData>({
@@ -45,10 +48,47 @@ export default function NewClientScreen() {
       {
         onSuccess: (client) => router.replace(`/(trainer)/clients/${client.id}`),
         onError: (err: unknown) => {
-          const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
-          Alert.alert('Error', msg ?? 'Failed to create client')
+          Alert.alert('Error', getErrorMessage(err, 'Failed to create client'))
         },
       },
+    )
+  }
+
+  if (loadingSub) {
+    return (
+      <View className="flex-1 bg-background">
+        <SafeAreaView className="flex-1" edges={['top']}>
+          <View className="gap-2 px-6 pt-6 mb-2">
+            <Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} hitSlop={12}>
+              <Text variant="small" muted>Back</Text>
+            </Pressable>
+            <Text variant="subtitle">New client</Text>
+          </View>
+          <View className="px-6 gap-3">
+            {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
+          </View>
+        </SafeAreaView>
+      </View>
+    )
+  }
+
+  if (subError) {
+    return (
+      <View className="flex-1 bg-background">
+        <SafeAreaView className="flex-1" edges={['top']}>
+          <View className="gap-2 px-6 pt-6 mb-2">
+            <Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} hitSlop={12}>
+              <Text variant="small" muted>Back</Text>
+            </Pressable>
+            <Text variant="subtitle">New client</Text>
+          </View>
+          <ErrorState
+            message={getErrorMessage(subErrorValue, 'Could not check your client limit.')}
+            onRetry={() => refetchSub()}
+            className="mx-6 mt-6"
+          />
+        </SafeAreaView>
+      </View>
     )
   }
 
@@ -57,8 +97,8 @@ export default function NewClientScreen() {
       <View className="flex-1 bg-background">
         <SafeAreaView className="flex-1" edges={['top']}>
           <View className="gap-2 px-6 pt-6 mb-2">
-            <Pressable onPress={() => router.back()} hitSlop={12}>
-              <Text variant="small" muted>← Back</Text>
+            <Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} hitSlop={12}>
+              <Text variant="small" muted>Back</Text>
             </Pressable>
             <Text variant="subtitle">New client</Text>
           </View>
@@ -81,8 +121,8 @@ export default function NewClientScreen() {
             showsVerticalScrollIndicator={false}
           >
             <View className="gap-2">
-              <Pressable onPress={() => router.back()} hitSlop={12}>
-                <Text variant="small" muted>← Back</Text>
+              <Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} hitSlop={12}>
+                <Text variant="small" muted>Back</Text>
               </Pressable>
               <Text variant="subtitle">New client</Text>
             </View>
@@ -117,7 +157,7 @@ export default function NewClientScreen() {
               </View>
 
               <Controller control={control} name="goals" render={({ field }) => (
-                <Input label="Goals" placeholder="Lose 5 kg, build muscle…"
+                <Input label="Goals" placeholder="Lose 5 kg, build muscle..."
                   multiline numberOfLines={3} error={errors.goals?.message}
                   className="h-22 text-top pt-3"
                   value={field.value} onChangeText={field.onChange} onBlur={field.onBlur} />

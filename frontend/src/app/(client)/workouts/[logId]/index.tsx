@@ -1,15 +1,21 @@
 import { useEffect } from 'react'
 import { useLocalSearchParams, useRouter } from 'expo-router'
+import { useIsMutating } from '@tanstack/react-query'
 import { Alert, Pressable, ScrollView, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Text } from '@/components/ui/text'
 import { Button } from '@/components/ui/button'
 import { SkeletonCard } from '@/components/ui/skeleton'
+import { ErrorState } from '@/components/ui/error-state'
 import { useWorkoutLog } from '@/features/workouts/hooks/use-workout-log'
 import { useStartWorkout } from '@/features/workouts/hooks/use-start-workout'
 import { useCompleteWorkout } from '@/features/workouts/hooks/use-complete-workout'
 import { useUpdateExerciseLog } from '@/features/workouts/hooks/use-update-exercise-log'
+import { workoutMutationKeys } from '@/features/workouts/hooks/mutation-keys'
 import type { WorkoutExerciseLog } from '@/features/workouts/types'
+import { getErrorMessage } from '@/shared/lib/error-message'
+import { triggerSelection } from '@/shared/lib/haptics'
+import { useIsOnline } from '@/shared/hooks/use-network-status'
 
 function SetStepper({
   exercise,
@@ -27,11 +33,13 @@ function SetStepper({
 
   const increment = () => {
     if (done >= total) return
+    triggerSelection()
     updateLog({ logId, exerciseLogId: exercise.id, completedSets: done + 1 })
   }
 
   const decrement = () => {
     if (done <= 0) return
+    triggerSelection()
     updateLog({ logId, exerciseLogId: exercise.id, completedSets: done - 1 })
   }
 
@@ -60,6 +68,9 @@ function SetStepper({
 
       <View className="flex-row items-center gap-3">
         <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Decrease completed sets for ${exercise.name}`}
+          accessibilityState={{ disabled: disabled || done <= 0 }}
           onPress={decrement}
           disabled={disabled || done <= 0}
           className={`w-10 h-10 rounded-xl bg-primary/10 items-center justify-center ${(disabled || done <= 0) ? 'opacity-35' : ''}`}
@@ -76,6 +87,9 @@ function SetStepper({
           ))}
         </View>
         <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Increase completed sets for ${exercise.name}`}
+          accessibilityState={{ disabled: disabled || allDone }}
           onPress={increment}
           disabled={disabled || allDone}
           className={`w-10 h-10 rounded-xl bg-primary items-center justify-center ${(disabled || allDone) ? 'opacity-35' : ''}`}
@@ -91,7 +105,9 @@ function SetStepper({
 export default function WorkoutExecutionScreen() {
   const { logId } = useLocalSearchParams<{ logId: string }>()
   const router = useRouter()
-  const { data: log, isLoading } = useWorkoutLog(logId)
+  const isOnline = useIsOnline()
+  const pendingWorkoutMutations = useIsMutating({ mutationKey: workoutMutationKeys.all })
+  const { data: log, isLoading, isError, error, refetch } = useWorkoutLog(logId)
   const { mutate: start } = useStartWorkout()
   const { mutate: complete, isPending: completing } = useCompleteWorkout()
 
@@ -103,16 +119,29 @@ export default function WorkoutExecutionScreen() {
 
   const isCompleted = log?.status === 'COMPLETED'
   const allExercisesDone = log?.exercises.every((e) => e.completedSets >= e.sets) ?? false
+  const syncMessage = pendingWorkoutMutations > 0
+    ? isOnline
+      ? 'Saving changes...'
+      : 'Saved offline - will sync automatically'
+    : null
 
   const handleComplete = () => {
+    const queuedOffline = !isOnline
     complete(logId, {
       onSuccess: () => {
+        if (queuedOffline) return
         Alert.alert('Workout done!', 'Great job completing your workout!', [
           { text: 'OK', onPress: () => router.replace('/(client)') },
         ])
       },
-      onError: () => Alert.alert('Error', 'Failed to complete workout'),
+      onError: (err) => Alert.alert('Error', getErrorMessage(err, 'Failed to complete workout')),
     })
+
+    if (!isOnline) {
+      Alert.alert('Saved offline', 'Workout completion will sync automatically when you are back online.', [
+        { text: 'OK', onPress: () => router.replace('/(client)') },
+      ])
+    }
   }
 
   return (
@@ -123,7 +152,7 @@ export default function WorkoutExecutionScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View className="mb-1">
-            <Pressable onPress={() => router.back()} hitSlop={12}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} hitSlop={12}>
               <Text variant="small" muted>Back</Text>
             </Pressable>
           </View>
@@ -132,6 +161,11 @@ export default function WorkoutExecutionScreen() {
             <View className="gap-3">
               {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
             </View>
+          ) : isError ? (
+            <ErrorState
+              message={getErrorMessage(error, 'Could not load this workout.')}
+              onRetry={() => refetch()}
+            />
           ) : log ? (
             <>
               <View className="gap-1">
@@ -139,6 +173,13 @@ export default function WorkoutExecutionScreen() {
                 <Text variant="small" muted>Day {log.dayNumber} - {log.dayName}</Text>
                 {isCompleted ? (
                   <Text variant="small" className="text-success font-semibold">Completed</Text>
+                ) : null}
+                {syncMessage ? (
+                  <View className={`self-start rounded-xl px-3 py-1.5 ${isOnline ? 'bg-primary/10' : 'bg-warning/10'}`}>
+                    <Text variant="small" className={isOnline ? 'text-primary font-semibold' : 'text-warning font-semibold'}>
+                      {syncMessage}
+                    </Text>
+                  </View>
                 ) : null}
               </View>
 

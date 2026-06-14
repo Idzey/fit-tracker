@@ -11,12 +11,18 @@ interface EmptyStateProps {
   onAction?: () => void;
   icon?: string;
   className?: string;
+  accessibilityLabel?: string;
 }
 
-export function EmptyState({ title, subtitle, action, onAction, icon, className }: EmptyStateProps) {
+export function EmptyState({ title, subtitle, action, onAction, icon, className, accessibilityLabel }: EmptyStateProps) {
   return (
-    <View className={cn('items-center py-12 px-6 gap-3', className)}>
-      {icon ? <Text className="text-5xl">{icon}</Text> : null}
+    <View
+      accessible
+      accessibilityRole="summary"
+      accessibilityLabel={accessibilityLabel ?? [title, subtitle].filter(Boolean).join('. ')}
+      className={cn('items-center py-12 px-6 gap-3', className)}
+    >
+      {icon ? <Text className="text-5xl" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">{icon}</Text> : null}
       <Text className="font-semibold text-center text-foreground">{title}</Text>
       {subtitle ? <Text variant="small" muted className="text-center leading-5">{subtitle}</Text> : null}
       {action && onAction ? (

@@ -1,6 +1,7 @@
 import { Pressable, View } from 'react-native'
 import { Text } from '@/components/ui/text'
 import { Avatar } from '@/components/ui/avatar'
+import { triggerSelection } from '@/shared/lib/haptics'
 import type { ClientSummary } from '../types'
 
 interface ClientCardProps {
@@ -16,7 +17,12 @@ function formatDate(iso: string | null) {
 export function ClientCard({ client, onPress }: ClientCardProps) {
   return (
     <Pressable
-      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`Open client ${client.name}`}
+      onPress={() => {
+        triggerSelection()
+        onPress()
+      }}
       className="mx-4 mb-2.5 active:opacity-75"
     >
       <View className="bg-card flex-row items-center p-3.5 rounded-2xl gap-3">

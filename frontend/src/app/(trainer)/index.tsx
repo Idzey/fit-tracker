@@ -4,12 +4,21 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Text } from '@/components/ui/text'
 import { Avatar } from '@/components/ui/avatar'
 import { SkeletonCard } from '@/components/ui/skeleton'
+import { EmptyState } from '@/components/ui/empty-state'
+import { ErrorState } from '@/components/ui/error-state'
 import { useClients } from '@/features/clients/hooks/use-clients'
 import { useNotifications } from '@/features/notifications/hooks/use-notifications'
+import { getErrorMessage } from '@/shared/lib/error-message'
 
 export default function TrainerDashboard() {
   const router = useRouter()
-  const { data: clientsData, isLoading: loadingClients } = useClients()
+  const {
+    data: clientsData,
+    isLoading: loadingClients,
+    isError: clientsError,
+    error: clientsErrorValue,
+    refetch: refetchClients,
+  } = useClients()
   const { data: notifData } = useNotifications()
 
   const unread = notifData?.unreadCount ?? 0
@@ -33,6 +42,8 @@ export default function TrainerDashboard() {
               <Text variant="small" muted>Trainer dashboard</Text>
             </View>
             <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Open notifications"
               onPress={() => router.push('/(trainer)/notifications')}
               className="p-2 relative"
             >
@@ -47,6 +58,8 @@ export default function TrainerDashboard() {
 
           <View className="flex-row gap-3">
             <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Create new client"
               className="flex-1 active:opacity-75"
               onPress={() => router.push('/(trainer)/clients/new')}
             >
@@ -56,6 +69,8 @@ export default function TrainerDashboard() {
               </View>
             </Pressable>
             <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Create new workout template"
               className="flex-1 active:opacity-75"
               onPress={() => router.push('/(trainer)/templates/new')}
             >
@@ -69,7 +84,7 @@ export default function TrainerDashboard() {
           <View className="gap-3">
             <View className="flex-row justify-between items-center">
               <Text className="font-semibold text-base text-foreground">Clients</Text>
-              <Pressable onPress={() => router.push('/(trainer)/clients')} hitSlop={8}>
+              <Pressable accessibilityRole="button" accessibilityLabel="See all clients" onPress={() => router.push('/(trainer)/clients')} hitSlop={8}>
                 <Text variant="small" className="text-primary font-semibold">See all</Text>
               </Pressable>
             </View>
@@ -78,10 +93,18 @@ export default function TrainerDashboard() {
               <View className="gap-2.5">
                 {[1, 2, 3].map((i) => <SkeletonCard key={i} className="rounded-xl h-16" />)}
               </View>
+            ) : clientsError ? (
+              <ErrorState
+                message={getErrorMessage(clientsErrorValue, 'Could not load clients.')}
+                onRetry={() => refetchClients()}
+                className="py-8"
+              />
             ) : clientsData?.data && clientsData.data.length > 0 ? (
               clientsData.data.slice(0, 5).map((client) => (
                 <Pressable
                   key={client.id}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Open client ${client.name}`}
                   onPress={() => router.push(`/(trainer)/clients/${client.id}`)}
                   className="active:opacity-75"
                 >
@@ -96,7 +119,13 @@ export default function TrainerDashboard() {
                 </Pressable>
               ))
             ) : (
-              <Text variant="small" muted>No clients yet - add your first one.</Text>
+              <EmptyState
+                title="No clients yet"
+                subtitle="Add your first client to start assigning programs."
+                action="Add client"
+                onAction={() => router.push('/(trainer)/clients/new')}
+                className="py-8"
+              />
             )}
           </View>
         </ScrollView>

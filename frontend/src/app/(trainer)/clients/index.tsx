@@ -5,9 +5,11 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Text } from '@/components/ui/text'
 import { SkeletonCard } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
+import { ErrorState } from '@/components/ui/error-state'
 import { ClientCard } from '@/features/clients/components/client-card'
 import { useClients } from '@/features/clients/hooks/use-clients'
 import { useSubscription } from '@/features/subscriptions/hooks/use-subscription'
+import { getErrorMessage } from '@/shared/lib/error-message'
 
 function limitLabel(limit: number | null) {
   return limit == null ? 'unlimited' : String(limit)
@@ -16,7 +18,7 @@ function limitLabel(limit: number | null) {
 export default function ClientsScreen() {
   const router = useRouter()
   const [search, setSearch] = useState('')
-  const { data, isLoading } = useClients(search || undefined)
+  const { data, isLoading, isError, error, refetch } = useClients(search || undefined)
   const { data: sub } = useSubscription()
   const atLimit = sub != null && sub.clientLimit != null && sub.currentClientCount >= sub.clientLimit
 
@@ -41,6 +43,7 @@ export default function ClientsScreen() {
             className="text-foreground text-base"
             autoCapitalize="none"
             returnKeyType="search"
+            accessibilityLabel="Search clients"
           />
         </View>
 
@@ -50,6 +53,12 @@ export default function ClientsScreen() {
               <SkeletonCard key={i} className="rounded-2xl" />
             ))}
           </View>
+        ) : isError ? (
+          <ErrorState
+            message={getErrorMessage(error, 'Could not load clients.')}
+            onRetry={() => refetch()}
+            className="mx-6 mt-10"
+          />
         ) : (
           <FlatList
             data={data?.data ?? []}
@@ -75,6 +84,8 @@ export default function ClientsScreen() {
         )}
 
         <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Add client"
           className={`absolute bottom-6 right-6 w-14 h-14 rounded-full items-center justify-center ${atLimit ? 'bg-muted-foreground' : 'bg-primary'}`}
           style={{ shadowColor: '#3c87f7', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8, elevation: 8 }}
           onPress={() => router.push('/(trainer)/clients/new')}

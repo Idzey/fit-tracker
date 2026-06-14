@@ -1,6 +1,7 @@
 import { Pressable, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Text } from '@/components/ui/text'
+import { triggerSelection } from '@/shared/lib/haptics'
 
 interface PaywallProps {
   title?: string
@@ -21,7 +22,12 @@ export function Paywall({
         {message}
       </Text>
       <Pressable
-        onPress={() => router.push('/(trainer)/settings/subscription')}
+        accessibilityRole="button"
+        accessibilityLabel="View subscription plans"
+        onPress={() => {
+          triggerSelection()
+          router.push('/(trainer)/settings/subscription')
+        }}
         className="mt-1 rounded-xl bg-primary px-6 py-3 active:opacity-75"
       >
         <Text className="font-bold text-white">View plans</Text>

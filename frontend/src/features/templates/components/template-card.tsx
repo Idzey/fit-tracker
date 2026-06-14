@@ -1,5 +1,6 @@
 import { Pressable, View } from 'react-native'
 import { Text } from '@/components/ui/text'
+import { triggerSelection } from '@/shared/lib/haptics'
 import type { TemplateSummary } from '../types'
 
 interface TemplateCardProps {
@@ -10,7 +11,12 @@ interface TemplateCardProps {
 export function TemplateCard({ template, onPress }: TemplateCardProps) {
   return (
     <Pressable
-      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`Open template ${template.name}`}
+      onPress={() => {
+        triggerSelection()
+        onPress()
+      }}
       className="mx-4 mb-2.5 active:opacity-75"
     >
       <View className="bg-card flex-row items-center p-4 rounded-2xl gap-3">

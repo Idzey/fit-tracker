@@ -4,13 +4,15 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Text } from '@/components/ui/text'
 import { SkeletonCard } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
+import { ErrorState } from '@/components/ui/error-state'
 import { useTemplates } from '@/features/templates/hooks/use-templates'
 import { useAssignProgram } from '@/features/templates/hooks/use-assign-program'
+import { getErrorMessage } from '@/shared/lib/error-message'
 
 export default function AssignProgramScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const router = useRouter()
-  const { data: templates, isLoading } = useTemplates()
+  const { data: templates, isLoading, isError, error, refetch } = useTemplates()
   const { mutate: assign, isPending } = useAssignProgram(id)
 
   const handleAssign = (templateId: string, templateName: string) => {
@@ -34,8 +36,8 @@ export default function AssignProgramScreen() {
     <View className="flex-1 bg-background">
       <SafeAreaView className="flex-1" edges={['top']}>
         <View className="p-6 pb-3 gap-2">
-          <Pressable onPress={() => router.back()} hitSlop={12}>
-            <Text variant="small" muted>← Back</Text>
+          <Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} hitSlop={12}>
+            <Text variant="small" muted>Back</Text>
           </Pressable>
           <Text variant="subtitle">Assign program</Text>
         </View>
@@ -44,6 +46,12 @@ export default function AssignProgramScreen() {
           <View className="px-6 gap-2.5">
             {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
           </View>
+        ) : isError ? (
+          <ErrorState
+            message={getErrorMessage(error, 'Could not load templates.')}
+            onRetry={() => refetch()}
+            className="mx-6 mt-10"
+          />
         ) : (
           <FlatList
             data={templates ?? []}
@@ -52,6 +60,8 @@ export default function AssignProgramScreen() {
               <Pressable
                 onPress={() => handleAssign(item.id, item.name)}
                 disabled={isPending}
+                accessibilityRole="button"
+                accessibilityLabel={`Assign template ${item.name}`}
                 className="active:opacity-75 mx-6 mb-2.5"
               >
                 <View className="bg-card flex-row items-center p-4 rounded-2xl gap-3">

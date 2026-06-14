@@ -5,8 +5,11 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Text } from '@/components/ui/text'
 import { SkeletonCard } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
+import { ErrorState } from '@/components/ui/error-state'
 import { useWorkoutLogs } from '@/features/workouts/hooks/use-workout-logs'
 import type { WorkoutLog, WorkoutStatus } from '@/features/workouts/types'
+import { getErrorMessage } from '@/shared/lib/error-message'
+import { triggerSelection } from '@/shared/lib/haptics'
 
 const STATUS_COLOR: Record<string, string> = {
   COMPLETED: 'text-success',
@@ -44,15 +47,20 @@ function WorkoutRow({ log, onPress }: { log: WorkoutLog; onPress: () => void }) 
   const date = log.dueDate ? new Date(log.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : null
 
   return (
-    <Pressable onPress={onPress} className="active:opacity-75">
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`Open workout ${log.templateName}`}
+      onPress={onPress}
+      className="active:opacity-75"
+    >
       <View className="bg-card rounded-xl p-3.5 flex-row items-center gap-3">
         <View className={`w-2.5 h-2.5 rounded-full ${dotColor}`} />
         <View className="flex-1 gap-0.5">
           <Text className="font-semibold text-foreground" numberOfLines={1}>{log.templateName}</Text>
           <Text variant="small" muted>
             Day {log.dayNumber} - {log.dayName}
-            {total > 0 ? ` · ${done}/${total} ex` : ''}
-            {date ? ` · ${date}` : ''}
+            {total > 0 ? ` - ${done}/${total} ex` : ''}
+            {date ? ` - ${date}` : ''}
           </Text>
         </View>
         <Text className={`text-xs font-semibold ${statusColor}`}>{STATUS_LABEL[log.status]}</Text>
@@ -64,7 +72,12 @@ function WorkoutRow({ log, onPress }: { log: WorkoutLog; onPress: () => void }) 
 export default function WorkoutsScreen() {
   const router = useRouter()
   const [filter, setFilter] = useState<WorkoutStatus | undefined>(undefined)
-  const { data: workouts, isLoading } = useWorkoutLogs(filter ? { status: filter } : undefined)
+  const { data: workouts, isLoading, isError, error, refetch } = useWorkoutLogs(filter ? { status: filter } : undefined)
+
+  const selectFilter = (value: WorkoutStatus | undefined) => {
+    triggerSelection()
+    setFilter(value)
+  }
 
   return (
     <View className="flex-1 bg-background">
@@ -83,7 +96,10 @@ export default function WorkoutsScreen() {
             {FILTERS.map((f) => (
               <Pressable
                 key={f.label}
-                onPress={() => setFilter(f.value)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: filter === f.value }}
+                accessibilityLabel={`Show ${f.label.toLowerCase()} workouts`}
+                onPress={() => selectFilter(f.value)}
                 className={`px-4 py-1.5 rounded-full ${filter === f.value ? 'bg-primary' : 'bg-border'}`}
               >
                 <Text
@@ -100,6 +116,12 @@ export default function WorkoutsScreen() {
             <View className="gap-2.5">
               {[1, 2, 3, 4].map((i) => <SkeletonCard key={i} className="rounded-xl h-16" />)}
             </View>
+          ) : isError ? (
+            <ErrorState
+              message={getErrorMessage(error, 'Could not load workouts.')}
+              onRetry={() => refetch()}
+              className="mt-4"
+            />
           ) : workouts && workouts.length > 0 ? (
             <View className="gap-2.5">
               {workouts.map((log) => (

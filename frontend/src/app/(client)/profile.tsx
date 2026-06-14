@@ -4,19 +4,24 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Text } from '@/components/ui/text'
 import { Button } from '@/components/ui/button'
 import { Avatar } from '@/components/ui/avatar'
+import { ErrorState } from '@/components/ui/error-state'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useAuthStore } from '@/store/auth.store'
 import { secureStore } from '@/shared/lib/secure-store'
 import { queryClient } from '@/shared/lib/query-client'
+import { clearPersistedQueryClient } from '@/shared/lib/query-persistence'
 import { useMyProgress } from '@/features/workouts/hooks/use-my-progress'
+import { getErrorMessage } from '@/shared/lib/error-message'
 
 export default function ProfileScreen() {
   const { logout, user } = useAuthStore()
   const router = useRouter()
-  const { data: progress } = useMyProgress()
+  const { data: progress, isLoading, isError, error, refetch } = useMyProgress()
 
   const handleLogout = async () => {
     logout()
     queryClient.clear()
+    await clearPersistedQueryClient()
     await secureStore.clearTokens()
     router.replace('/(auth)/login')
   }
@@ -37,7 +42,24 @@ export default function ProfileScreen() {
             </Text>
           </View>
 
-          {progress ? (
+          {isLoading ? (
+            <View className="bg-card rounded-2xl p-4">
+              <View className="flex-row items-center">
+                {[1, 2, 3].map((i) => (
+                  <View key={i} className="flex-1 items-center gap-2">
+                    <Skeleton className="h-7 w-12" />
+                    <Skeleton className="h-3.5 w-16" />
+                  </View>
+                ))}
+              </View>
+            </View>
+          ) : isError ? (
+            <ErrorState
+              message={getErrorMessage(error, 'Could not load profile stats.')}
+              onRetry={() => refetch()}
+              className="py-6"
+            />
+          ) : progress ? (
             <View className="bg-card rounded-2xl p-4">
               <View className="flex-row items-center">
                 <View className="flex-1 items-center gap-1">
@@ -59,10 +81,15 @@ export default function ProfileScreen() {
           ) : null}
 
           <View className="gap-2.5">
-            <Pressable onPress={() => router.push('/(client)/notifications')} className="active:opacity-75">
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Open notifications"
+              onPress={() => router.push('/(client)/notifications')}
+              className="active:opacity-75"
+            >
               <View className="bg-card rounded-xl px-4 py-3.5 flex-row justify-between items-center">
                 <Text className="text-foreground">Notifications</Text>
-                <Text muted className="text-lg">›</Text>
+                <Text muted className="text-lg">{'>'}</Text>
               </View>
             </Pressable>
           </View>

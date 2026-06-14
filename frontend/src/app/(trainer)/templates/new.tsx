@@ -8,6 +8,7 @@ import { Text } from '@/components/ui/text'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useCreateTemplate } from '@/features/templates/hooks/use-create-template'
+import { getErrorMessage } from '@/shared/lib/error-message'
 
 const schema = z.object({
   name: z.string().min(2, 'At least 2 characters'),
@@ -30,8 +31,7 @@ export default function NewTemplateScreen() {
       {
         onSuccess: (template) => router.replace(`/(trainer)/templates/${template.id}`),
         onError: (err: unknown) => {
-          const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
-          Alert.alert('Error', msg ?? 'Failed to create template')
+          Alert.alert('Error', getErrorMessage(err, 'Failed to create template'))
         },
       },
     )
@@ -47,8 +47,8 @@ export default function NewTemplateScreen() {
             showsVerticalScrollIndicator={false}
           >
             <View className="gap-2">
-              <Pressable onPress={() => router.back()} hitSlop={12}>
-                <Text variant="small" muted>← Back</Text>
+              <Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} hitSlop={12}>
+                <Text variant="small" muted>Back</Text>
               </Pressable>
               <Text variant="subtitle">New template</Text>
             </View>
@@ -60,7 +60,7 @@ export default function NewTemplateScreen() {
                   value={field.value} onChangeText={field.onChange} onBlur={field.onBlur} />
               )} />
               <Controller control={control} name="description" render={({ field }) => (
-                <Input label="Description" placeholder="Beginner-friendly program…"
+                <Input label="Description" placeholder="Beginner-friendly program..."
                   multiline numberOfLines={3}
                   className="h-22 text-top pt-3"
                   error={errors.description?.message}

@@ -9,11 +9,13 @@ interface InputProps extends TextInputProps {
   containerClassName?: string;
 }
 
-export function Input({ label, error, containerClassName, className, ...props }: InputProps) {
+export function Input({ label, error, containerClassName, className, accessibilityLabel, accessibilityHint, ...props }: InputProps) {
   return (
     <View className={cn('gap-1.5', containerClassName)}>
       {label ? <Text variant="small" className="font-semibold text-foreground">{label}</Text> : null}
       <TextInput
+        accessibilityLabel={accessibilityLabel ?? label}
+        accessibilityHint={error ?? accessibilityHint}
         className={cn(
           'h-[52px] px-4 rounded-2xl bg-card text-foreground text-base',
           'border border-transparent',

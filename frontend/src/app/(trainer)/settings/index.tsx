@@ -3,11 +3,14 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { Text } from '@/components/ui/text'
 import { Button } from '@/components/ui/button'
+import { ErrorState } from '@/components/ui/error-state'
 import { useAuthStore } from '@/store/auth.store'
 import { secureStore } from '@/shared/lib/secure-store'
 import { queryClient } from '@/shared/lib/query-client'
+import { clearPersistedQueryClient } from '@/shared/lib/query-persistence'
 import { useSubscription } from '@/features/subscriptions/hooks/use-subscription'
 import { PLAN_DETAILS } from '@/features/subscriptions/types'
+import { getErrorMessage } from '@/shared/lib/error-message'
 
 function limitLabel(limit: number | null) {
   return limit == null ? 'unlimited' : String(limit)
@@ -15,7 +18,13 @@ function limitLabel(limit: number | null) {
 
 function SettingsRow({ label, value, onPress }: { label: string; value?: string; onPress?: () => void }) {
   return (
-    <Pressable onPress={onPress} disabled={!onPress} className={onPress ? 'active:opacity-75' : ''}>
+    <Pressable
+      accessibilityRole={onPress ? 'button' : undefined}
+      accessibilityLabel={label}
+      onPress={onPress}
+      disabled={!onPress}
+      className={onPress ? 'active:opacity-75' : ''}
+    >
       <View className="bg-card rounded-xl px-4 py-3.5 flex-row items-center justify-between">
         <Text className="font-medium text-foreground">{label}</Text>
         <View className="flex-row items-center gap-1.5">
@@ -30,17 +39,20 @@ function SettingsRow({ label, value, onPress }: { label: string; value?: string;
 export default function SettingsScreen() {
   const { logout } = useAuthStore()
   const router = useRouter()
-  const { data: sub } = useSubscription()
+  const { data: sub, isLoading, isError, error, refetch } = useSubscription()
 
   const handleLogout = async () => {
     logout()
     queryClient.clear()
+    await clearPersistedQueryClient()
     await secureStore.clearTokens()
     router.replace('/(auth)/login')
   }
 
   const planLabel = sub
     ? `${PLAN_DETAILS[sub.plan].label} - ${sub.currentClientCount}/${limitLabel(sub.clientLimit)} clients`
+    : isLoading
+    ? 'Loading...'
     : undefined
 
   return (
@@ -59,6 +71,13 @@ export default function SettingsScreen() {
               value={planLabel}
               onPress={() => router.push('/(trainer)/settings/subscription')}
             />
+            {isError ? (
+              <ErrorState
+                message={getErrorMessage(error, 'Could not load subscription status.')}
+                onRetry={() => refetch()}
+                className="py-4"
+              />
+            ) : null}
             <SettingsRow
               label="Notifications"
               onPress={() => router.push('/(trainer)/notifications')}

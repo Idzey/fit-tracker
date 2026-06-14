@@ -5,8 +5,10 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Text } from '@/components/ui/text'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
+import { ErrorState } from '@/components/ui/error-state'
 import { useClientPhotos } from '@/features/photos/hooks/use-client-photos'
 import type { Photo } from '@/features/photos/types'
+import { getErrorMessage } from '@/shared/lib/error-message'
 
 const COLS = 3
 const GAP = 3
@@ -31,14 +33,14 @@ function PhotoTile({ photo }: { photo: Photo }) {
 export default function ClientPhotosScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const router = useRouter()
-  const { data: photos, isLoading } = useClientPhotos(id)
+  const { data: photos, isLoading, isError, error, refetch } = useClientPhotos(id)
 
   return (
     <View className="flex-1 bg-background">
       <SafeAreaView className="flex-1" edges={['top']}>
         <View className="flex-row items-center justify-between px-6 pt-6 pb-3">
-          <Pressable onPress={() => router.back()} hitSlop={12}>
-            <Text variant="small" muted>← Back</Text>
+          <Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} hitSlop={12}>
+            <Text variant="small" muted>Back</Text>
           </Pressable>
           <Text variant="subtitle">Client Photos</Text>
           <View style={{ width: 48 }} />
@@ -50,6 +52,12 @@ export default function ClientPhotosScreen() {
               <Skeleton key={i} style={{ width: TILE, height: TILE, borderRadius: 6 }} />
             ))}
           </View>
+        ) : isError ? (
+          <ErrorState
+            message={getErrorMessage(error, 'Could not load client photos.')}
+            onRetry={() => refetch()}
+            className="m-6"
+          />
         ) : photos && photos.length > 0 ? (
           <FlatList
             data={photos}

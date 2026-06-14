@@ -4,12 +4,14 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Text } from '@/components/ui/text'
 import { SkeletonCard } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
+import { ErrorState } from '@/components/ui/error-state'
 import { TemplateCard } from '@/features/templates/components/template-card'
 import { useTemplates } from '@/features/templates/hooks/use-templates'
+import { getErrorMessage } from '@/shared/lib/error-message'
 
 export default function TemplatesScreen() {
   const router = useRouter()
-  const { data: templates, isLoading } = useTemplates()
+  const { data: templates, isLoading, isError, error, refetch } = useTemplates()
 
   return (
     <View className="flex-1 bg-background">
@@ -25,6 +27,12 @@ export default function TemplatesScreen() {
           <View className="px-6 gap-2.5">
             {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} className="rounded-2xl" />)}
           </View>
+        ) : isError ? (
+          <ErrorState
+            message={getErrorMessage(error, 'Could not load templates.')}
+            onRetry={() => refetch()}
+            className="mx-6 mt-10"
+          />
         ) : (
           <FlatList
             data={templates ?? []}
@@ -50,6 +58,8 @@ export default function TemplatesScreen() {
         )}
 
         <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Create template"
           className="absolute bottom-6 right-6 w-14 h-14 rounded-full bg-primary items-center justify-center"
           style={{ shadowColor: '#3c87f7', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8, elevation: 8 }}
           onPress={() => router.push('/(trainer)/templates/new')}
