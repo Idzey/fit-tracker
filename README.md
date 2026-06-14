@@ -1,24 +1,24 @@
 # FitTrack
 
-Monorepo for the FitTrack SaaS demo.
+Монорепо для FitTrack — SaaS-платформы для фитнес-тренеров.
 
-## Stack
+## Стек
 
-- Backend: Fastify, Prisma, PostgreSQL, S3-compatible storage, SSE, Expo push
-- Frontend: Expo Router, React Native, NativeWind, TanStack Query, Zustand
-- Observability: Pino logs, Sentry, health checks
-- Offline: TanStack Query persistence + offline workout mutation queue
+- **Бэкенд:** Fastify, Prisma, PostgreSQL, S3-совместимое хранилище, SSE, Expo push
+- **Фронтенд:** Expo Router, React Native, NativeWind, TanStack Query, Zustand
+- **Мониторинг:** Pino логи, Sentry, health checks
+- **Офлайн:** персистентность TanStack Query + очередь мутаций при отсутствии сети
 
-## Local setup
+## Локальный запуск
 
-1. Install deps
+1. Установить зависимости
 
 ```bash
 cd backend && npm ci
 cd ../frontend && npm ci
 ```
 
-2. Start infra
+2. Запустить инфраструктуру
 
 ```bash
 cd ..
@@ -26,7 +26,7 @@ cp .env.example .env
 docker compose up -d postgres minio
 ```
 
-3. Prepare backend
+3. Подготовить бэкенд
 
 ```bash
 cd backend
@@ -36,13 +36,13 @@ npm run db:migrate
 npm run db:seed
 ```
 
-4. Start backend
+4. Запустить бэкенд
 
 ```bash
 npm run dev
 ```
 
-5. Start frontend
+5. Запустить фронтенд
 
 ```bash
 cd ../frontend
@@ -50,18 +50,18 @@ cp .env.example .env
 npx expo start --web
 ```
 
-## Demo accounts
+## Демо-аккаунты
 
-- Trainer: `trainer@fittrack.demo` / `Password123!`
-- Client: `client@fittrack.demo` / `Password123!`
+- Тренер: `trainer@fittrack.demo` / `Password123!`
+- Клиент: `client@fittrack.demo` / `Password123!`
 
-## Key demo flow
+## Основной сценарий
 
-1. Log in as trainer.
-2. Open clients, templates, notifications, subscription.
-3. Log in as client.
-4. Open today workout, change set counters, complete workout.
-5. Turn network off and repeat step 4 to see offline queue + sync banner.
+1. Войти как тренер.
+2. Открыть клиентов, шаблоны, уведомления, подписку.
+3. Войти как клиент.
+4. Открыть тренировку на сегодня, изменить счётчики подходов, завершить тренировку.
+5. Отключить сеть и повторить шаг 4 — появится офлайн-очередь и баннер синхронизации.
 
 ## Health checks
 
