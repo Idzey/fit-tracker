@@ -13,7 +13,13 @@ export function LoginForm() {
     control,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginData>({ resolver: zodResolver(loginSchema) })
+  } = useForm<LoginData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  })
 
   const onSubmit = (data: LoginData) => {
     login(data, {

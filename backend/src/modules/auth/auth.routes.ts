@@ -39,7 +39,11 @@ export async function authRoutes(fastify: FastifyInstance) {
       { sub: result.userId, role: result.role },
       { expiresIn: '15m' },
     )
-    return { accessToken, refreshToken: result.refreshToken }
+    return {
+      accessToken,
+      refreshToken: result.refreshToken,
+      user: { id: result.userId, role: result.role },
+    }
   })
 
   // POST /auth/logout

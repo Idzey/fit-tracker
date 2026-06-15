@@ -124,14 +124,6 @@ const schemas = {
       user: ref('AuthUser'),
     },
   },
-  TokenResponse: {
-    type: 'object',
-    required: ['accessToken', 'refreshToken'],
-    properties: {
-      accessToken: { type: 'string' },
-      refreshToken: { type: 'string' },
-    },
-  },
   MeResponse: {
     type: 'object',
     required: ['id', 'email', 'role', 'createdAt'],
@@ -623,7 +615,7 @@ const routeDocs: Record<string, RouteDoc> = {
     tags: ['Auth'],
     summary: 'Refresh access token',
     body: ref('RefreshTokenRequest'),
-    response: response(ref('TokenResponse')),
+    response: response(ref('AuthResponse')),
   },
   'POST /auth/logout': withAuth({
     operationId: 'logout',

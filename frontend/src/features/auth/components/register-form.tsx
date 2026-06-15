@@ -13,7 +13,14 @@ export function RegisterForm() {
     control,
     handleSubmit,
     formState: { errors },
-  } = useForm<RegisterData>({ resolver: zodResolver(registerSchema) })
+  } = useForm<RegisterData>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      password: '',
+    },
+  })
 
   const onSubmit = (data: RegisterData) => {
     register(data, {
